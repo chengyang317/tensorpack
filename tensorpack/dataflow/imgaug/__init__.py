@@ -2,20 +2,11 @@
 # File: __init__.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import os
-from pkgutil import walk_packages
+from tensorpack.dataflow.imgaug.base import *
+from tensorpack.dataflow.imgaug.crop import *
+from tensorpack.dataflow.imgaug.deform import *
+from tensorpack.dataflow.imgaug.imgproc import *
+from tensorpack.dataflow.imgaug.noname import *
+from tensorpack.dataflow.imgaug.paste import *
 
-__all__ = []
-
-def global_import(name):
-    p = __import__(name, globals(), locals(), level=1)
-    lst = p.__all__ if '__all__' in dir(p) else dir(p)
-    del globals()[name]
-    for k in lst:
-        globals()[k] = p.__dict__[k]
-
-for _, module_name, _ in walk_packages(
-        [os.path.dirname(__file__)]):
-    if not module_name.startswith('_'):
-        global_import(module_name)
 
