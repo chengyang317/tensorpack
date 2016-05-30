@@ -2,18 +2,12 @@
 #  File: __init__.py
 #  Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-from pkgutil import walk_packages
-import os
-import os.path
-
-def _global_import(name):
-    p = __import__(name, globals(), locals(), level=1)
-    lst = p.__all__ if '__all__' in dir(p) else dir(p)
-    for k in lst:
-        globals()[k] = p.__dict__[k]
-
-for _, module_name, _ in walk_packages(
-        [os.path.dirname(__file__)]):
-    if not module_name.startswith('_'):
-        _global_import(module_name)
+from tensorpack.models.batch_norm import *
+from tensorpack.models.conv2d import *
+from tensorpack.models.fc import *
+from tensorpack.models.image_sample import *
+from tensorpack.models.model_desc import *
+from tensorpack.models.nonlin import *
+from tensorpack.models.pool import *
+from tensorpack.models.regularize import *
 
