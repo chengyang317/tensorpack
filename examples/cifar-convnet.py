@@ -143,7 +143,7 @@ if __name__ == '__main__':
 
     basename = os.path.basename(__file__)
     logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]))
+        os.path.join('train_log', basename[:basename.rfind('.')]), 'k')
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
