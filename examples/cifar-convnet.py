@@ -106,7 +106,8 @@ def get_data(train_or_test, cifar_classnum):
 def get_config(cifar_classnum):
     # prepare dataset
     dataset_train = get_data('train', cifar_classnum)
-    step_per_epoch = dataset_train.size()
+    # step_per_epoch = dataset_train.size()
+    step_per_epoch = 5
     dataset_test = get_data('test', cifar_classnum)
 
     sess_config = get_default_sess_config(0.5)
