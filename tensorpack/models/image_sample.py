@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 
-from ._common import layer_register
+from tensorpack.models._common import layer_register
 
 __all__ = ['ImageSample']
 
@@ -82,7 +82,7 @@ def ImageSample(inputs):
            sample(template, lyux) * neg_diffy * diffx,
            sample(template, uylx) * diffy * neg_diffx], name='sampled')
 
-from ._test import TestModel
+from tensorpack.models._test import TestModel
 class TestSample(TestModel):
     def test_sample(self):
         import numpy as np
