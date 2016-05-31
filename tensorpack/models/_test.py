@@ -5,7 +5,7 @@
 
 import tensorflow as tf
 import numpy as np
-from . import *
+# from . import *
 import unittest
 
 class TestModel(unittest.TestCase):
