@@ -11,8 +11,8 @@ import os
 
 from six.moves import zip
 
-from .utils import change_env
-from . import logger
+from tensorpack.utils.utils import change_env
+from tensorpack.utils.logger import logger
 
 def get_processor():
     ret = {}
@@ -71,9 +71,12 @@ def load_caffe(model_desc, model_file):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('model')
-    parser.add_argument('weights')
-    parser.add_argument('output')
+    parser.add_argument('--model', help='path to prototxt', type=str,
+                        default='/Users/philipcheng/Workspace/projects/tensorpack/test/VGG_ILSVRC_16_layers_deploy.prototxt')
+    parser.add_argument('--weights', help='path to caffemodel', type=str,
+                        default='/Users/philipcheng/Workspace/projects/tensorpack/test/VGG_ILSVRC_16_layers.caffemodel')
+    parser.add_argument('--output', help='path to output npy', type=str,
+                        default='/Users/philipcheng/Workspace/projects/tensorpack/test/vgg16.npy')
     args = parser.parse_args()
     ret = load_caffe(args.model, args.weights)
 
