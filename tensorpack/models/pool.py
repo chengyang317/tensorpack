@@ -90,7 +90,7 @@ def FixedUnPooling(x, shape, unpool_mat=None):
     shape = shape2d(shape)
 
     # a faster implementation for this special case
-    if shape[0] == 2 and  shape[1] == 2 and unpool_mat is None:
+    if shape[0] == 2 and shape[1] == 2 and unpool_mat is None:
         return UnPooling2x2ZeroFilled(x)
 
     input_shape = tf.shape(x)
@@ -150,6 +150,51 @@ def BilinearUpSample(x, shape):
     output = tf.nn.conv2d(x, weight_var, [1,1,1,1], padding='SAME')
     return output
 
+
+@layer_register()
+def MaxPoolingWithArgmax(x, shape, stride=None, padding='VALID'):
+    """
+    MaxPooling on image and while return indices
+
+    :param input: NHWC tensor.
+    :param shape: int or [h, w]
+    :param stride: int or [h, w]. default to be shape.
+    :param padding: 'valid' or 'same'. default to 'valid'
+    :returns: NHWC tensor and indices tensor NHWC where store a flatten index
+            ((b * height + y) * width + x) * channels + c.
+    """
+    padding = padding.upper()
+    shape = shape4d(shape)
+    if stride is None:
+        stride = shape
+    else:
+        stride = shape4d(stride)
+    return tf.nn.max_pool_with_argmax(x, ksize=shape, strides=stride, padding=padding)
+
+
+@layer_register()
+def ArgmaxUnPooling(x, argmax, shape, stride=None):
+    """
+    Unpool the input x using indices tensor argmax which is from tensorflow max_pool_with_argmax.
+    :param x:
+    :param argmax:
+    :param shape: int or [h, w]
+    :param stride: int or [h, w]. default to be shape.
+    :return:
+    """
+    shape = shape4d(shape)
+    if stride is None:
+        stride = shape
+    else:
+        stride = shape4d(stride)
+
+
+
+
+
+
+
+
 from ._test import TestModel
 class TestPool(TestModel):
     def test_fixed_unpooling(self):
@@ -193,23 +238,3 @@ class TestPool(TestModel):
         self.assertTrue(diff.max() < 1e-4)
 
 
-@layer_register()
-def MaxPoolingWithArgmax(x, shape, stride=None, padding='VALID'):
-    """
-    MaxPooling on image and while return indices
-
-    :param input: NHWC tensor.
-    :param shape: int or [h, w]
-    :param stride: int or [h, w]. default to be shape.
-    :param padding: 'valid' or 'same'. default to 'valid'
-    :returns: NHWC tensor and indices tensor NHWC where store a flatten index
-            ((b * height + y) * width + x) * channels + c.
-    """
-    padding = padding.upper()
-    shape = shape4d(shape)
-    if stride is None:
-        stride = shape
-    else:
-        stride = shape4d(stride)
-
-    return tf.nn.max_pool_with_argmax(x, ksize=shape, strides=stride, padding=padding)
