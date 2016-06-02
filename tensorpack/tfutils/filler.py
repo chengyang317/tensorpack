@@ -89,6 +89,8 @@ def get_initializer(filter_shape, filler_config):
         return xavier_initializer(filter_shape, filler_config)
     elif filler_config.type.upper() == 'MSRA':
         return msra_initializer(filter_shape, filler_config)
+    elif filler_config.type.upper() == 'CONSTANT':
+        constant_initializer(filter_shape, filler_config)
     else:
         raise KeyError('Please fix me!')
 
