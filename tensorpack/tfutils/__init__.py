@@ -9,4 +9,4 @@ from tensorpack.tfutils.modelutils import *
 from tensorpack.tfutils.sessinit import *
 from tensorpack.tfutils.summary import *
 from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.paraminit import *
+from tensorpack.tfutils.filler import *

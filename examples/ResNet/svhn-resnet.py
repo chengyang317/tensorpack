@@ -44,7 +44,7 @@ class Model(ModelDesc):
         def conv(name, l, channel, stride):
             return Conv2D(name, l, channel, 3, stride=stride,
                           nl=tf.identity, use_bias=False,
-                          W_init=tf.random_normal_initializer(stddev=np.sqrt(2.0/9/channel)))
+                          w_init_config=tf.random_normal_initializer(stddev=np.sqrt(2.0 / 9 / channel)))
 
         def residual(name, l, increase_dim=False, first=False):
             shape = l.get_shape().as_list()
