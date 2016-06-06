@@ -155,7 +155,7 @@ def BilinearUpSample(x, shape):
 def MaxPoolingWithArgmax(x, shape, stride=None, padding='VALID'):
     """
     MaxPooling on image and while return indices
-
+    # this functon now only works on gpu!!!! Todo
     :param input: NHWC tensor.
     :param shape: int or [h, w]
     :param stride: int or [h, w]. default to be shape.
@@ -187,12 +187,7 @@ def ArgmaxUnPooling(x, argmax, shape, stride=None):
         stride = shape
     else:
         stride = shape4d(stride)
-
-
-
-
-
-
+    pass
 
 
 from ._test import TestModel
