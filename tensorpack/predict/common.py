@@ -75,9 +75,7 @@ def get_predict_func(config):
     else:
         input_map = [input_vars[k] for k in config.input_data_mapping]
 
-    # check output_var_names against output_vars
-    output_vars = [tf.get_default_graph().get_tensor_by_name(get_op_var_name(n)[1])
-                   for n in output_var_names]
+    output_vars = get_elems_by_keys(config.model.elements, config.output_var_names)
 
     # XXX does it work? start with minimal memory, but allow growth
     sess = tf.Session(config=get_default_sess_config(0.3))

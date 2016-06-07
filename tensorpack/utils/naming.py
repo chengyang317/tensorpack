@@ -2,6 +2,8 @@
 # File: naming.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
+__all__ = ['GLOBAL_STEP_OP_NAME', 'GLOBAL_STEP_VAR_NAME', 'MOVING_SUMMARY_VARS_KEY']
+
 GLOBAL_STEP_OP_NAME = 'global_step'
 GLOBAL_STEP_VAR_NAME = 'global_step:0'
 
@@ -10,4 +12,4 @@ MOVING_SUMMARY_VARS_KEY = 'MOVING_SUMMARY_VARIABLES'
 
 # export all upper case variables
 all_local_names = locals().keys()
-__all__ = [x for x in all_local_names if x.isupper()]
+# __all__ = [x for x in all_local_names if x.isupper()]

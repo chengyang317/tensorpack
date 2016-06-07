@@ -10,7 +10,8 @@ __all__ = ['get_default_sess_config',
            'get_global_step',
            'get_global_step_var',
            'get_op_var_name',
-           'get_vars_by_names'
+           'get_vars_by_names',
+           'get_elems_by_keys'
            ]
 
 def get_default_sess_config(mem_fraction=0.9):
@@ -66,3 +67,26 @@ def get_vars_by_names(names):
         opn, varn = get_op_var_name(n)
         ret.append(G.get_tensor_by_name(varn))
     return ret
+
+
+def get_elems_by_keys(elements, names):
+    """
+    Get a list of elements from graph env by locals's key name
+    :param elements: A dict contains elements created in the graph builting process.
+    :param names: keys of dict
+    :return:
+    """
+    ret = []
+    if type(names) not in [tuple, list]:
+        names = [names,]
+    for key in names:
+        try:
+            elem = elements[key]
+        except:
+            raise KeyError('loclas dont have the key {}'.format(key))
+        if type(elem) in [tuple, list]:
+            ret.extend(elem)
+        else:
+            ret.append(elem)
+    return ret
+
