@@ -172,6 +172,25 @@ def MaxPoolingWithArgmax(x, shape, stride=None, padding='VALID'):
     return tf.nn.max_pool_with_argmax(x, ksize=shape, strides=stride, padding=padding)
 
 
+def UnPooling2x2SameFilled(x):
+    # out = tf.concat(3, [x, tf.identity(x)])
+    # out = tf.concat(2, [out, tf.identity(out)])
+    # sh = x.get_shape().as_list()
+    # if None not in sh[1:]:
+    #     out_size = [-1, sh[1] * 2, sh[2] * 2, sh[3]]
+    #     return tf.reshape(out, out_size)
+    # else:
+    #     sh = tf.shape(x)
+    #     return tf.reshape(out, [-1, sh[1] * 2, sh[2] * 2, sh[3]])
+    return tf.tile(x, multiples=(1,2,2,1))
+
+
+def unpooling2x2_argmax(x, argmax):
+    unpool_x = UnPooling2x2SameFilled(x)
+
+
+
+
 @layer_register()
 def ArgmaxUnPooling(x, argmax, shape, stride=None):
     """
@@ -182,12 +201,11 @@ def ArgmaxUnPooling(x, argmax, shape, stride=None):
     :param stride: int or [h, w]. default to be shape.
     :return:
     """
-    shape = shape4d(shape)
-    if stride is None:
-        stride = shape
-    else:
-        stride = shape4d(stride)
-    pass
+    shape = shape2d(shape)
+    if shape[0] == 2 and shape[1] == 2 and not stride:
+        return unpooling2x2_argmax(x, argmax)
+    raise LookupError('Fix it')
+
 
 
 from ._test import TestModel

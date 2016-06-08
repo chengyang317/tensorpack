@@ -1,3 +1,4 @@
+tensorflow
 termcolor
 pillow
 scipy
