@@ -10,4 +10,5 @@ from tensorpack.models.model_desc import *
 from tensorpack.models.nonlin import *
 from tensorpack.models.pool import *
 from tensorpack.models.regularize import *
+from tensorpack.models.spatial_transformer import *
 

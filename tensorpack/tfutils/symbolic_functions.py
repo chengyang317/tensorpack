@@ -6,6 +6,10 @@ import tensorflow as tf
 import numpy as np
 from ..utils import logger
 
+__all__ = ['prediction_incorrect', 'one_hot', 'flatten', 'batch_flatten', 'logSoftmax',
+           'class_balanced_binary_class_cross_entropy', 'print_stat', 'rms']
+
+
 def one_hot(y, num_labels):
     """
     :param y: prediction. an Nx1 int tensor.
@@ -15,6 +19,7 @@ def one_hot(y, num_labels):
     logger.warn("symbf.one_hot is deprecated in favor of more general tf.one_hot")
     return tf.one_hot(y, num_labels, 1.0, 0.0, name='one_hot')
 
+
 def prediction_incorrect(logits, label, topk=1):
     """
     :param logits: NxC
@@ -23,11 +28,13 @@ def prediction_incorrect(logits, label, topk=1):
     """
     return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)), tf.float32)
 
+
 def flatten(x):
     """
     Flatten the tensor.
     """
     return tf.reshape(x, [-1])
+
 
 def batch_flatten(x):
     """
@@ -37,6 +44,7 @@ def batch_flatten(x):
     if None not in shape:
         return tf.reshape(x, [-1, np.prod(shape)])
     return tf.reshape(x, tf.pack([tf.shape(x)[0], -1]))
+
 
 def logSoftmax(x):
     """
@@ -48,6 +56,7 @@ def logSoftmax(x):
         z = x - tf.reduce_max(x, 1, keep_dims=True)
         logprob = z - tf.log(tf.reduce_sum(tf.exp(z), 1, keep_dims=True))
         return logprob
+
 
 def class_balanced_binary_class_cross_entropy(pred, label, name='cross_entropy_loss'):
     """
@@ -73,11 +82,13 @@ def class_balanced_binary_class_cross_entropy(pred, label, name='cross_entropy_l
     cost = tf.reduce_mean(cost, name=name)
     return cost
 
+
 def print_stat(x):
     """ a simple print op.
         Use it like: x = print_stat(x)
     """
     return tf.Print(x, [tf.reduce_mean(x), x], summarize=20)
+
 
 def rms(x, name=None):
     if name is None:

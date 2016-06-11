@@ -43,7 +43,7 @@ class Model(ModelDesc):
 
         l = tf.nn.dropout(l, keep_prob)
         l = FullyConnected('fc0', l, 512,
-                           b_init=tf.constant_initializer(0.1))
+                           b_init_config=tf.constant_initializer(0.1))
         logits = FullyConnected('linear', l, out_dim=10, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
 

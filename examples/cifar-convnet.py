@@ -48,10 +48,10 @@ class Model(ModelDesc):
             l = Conv2D('conv3.1', l, out_channel=128, padding='VALID')
             l = Conv2D('conv3.2', l, out_channel=128, padding='VALID')
         l = FullyConnected('fc0', l, 1024 + 512,
-                           b_init=tf.constant_initializer(0.1))
+                           b_init_config=tf.constant_initializer(0.1))
         l = tf.nn.dropout(l, keep_prob)
         l = FullyConnected('fc1', l, 512,
-                           b_init=tf.constant_initializer(0.1))
+                           b_init_config=tf.constant_initializer(0.1))
         logits = FullyConnected('linear', l, out_dim=self.cifar_classnum, nl=tf.identity)
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)

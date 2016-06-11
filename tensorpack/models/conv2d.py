@@ -36,8 +36,12 @@ def Conv2D(x, out_channel, kernel_shape,
     filter_shape = kernel_shape + [in_channel / split, out_channel]
     stride = shape4d(stride)
 
-    w_initializer = get_initializer(filter_shape, w_init_config) if w_init_config else get_w_default_initializer(filter_shape)
-    b_initializer = get_initializer(filter_shape, b_init_config) if b_init_config else get_b_default_initilizer()
+    if not w_init_config:
+        w_init_config = FillerConfig(type='xavier', variance_norm='AVERAGE')
+    if not b_init_config:
+        b_init_config = FillerConfig(type='constant', value=0.0)
+    w_initializer = get_initializer(filter_shape, w_init_config)
+    b_initializer = get_initializer([out_channel], b_init_config)
 
     W = tf.get_variable('W', filter_shape, initializer=w_initializer)
     if use_bias:
