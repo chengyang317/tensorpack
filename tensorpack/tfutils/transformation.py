@@ -4,7 +4,7 @@
 # Time: 6/10/16 -> 5:06 PM
 import tensorflow as tf
 
-__all__ = ['tensor_repeat']
+__all__ = ['tensor_repeat', 'tensor_repeats']
 
 
 def tensor_repeat(x, dims, ntimes):
@@ -32,4 +32,26 @@ def tensor_repeat(x, dims, ntimes):
         else:
             multiples.append(1)
     return tf.tile(x, multiples=multiples)
+
+
+def tensor_repeats(x, multiples, axis=0):
+    """
+
+    :param x:
+    :param multiples:
+    :param axis:
+    :return:
+    """
+    new_dims = len(multiples)
+    x_dims = x.get_shape().ndims
+    if axis == 0:
+        while x.get_shape().ndims < new_dims:
+            x = tf.expand_dims(x, -1)
+    elif axis == 1:
+        while x.get_shape().ndims < new_dims:
+            x = tf.expand_dims(x, 0)
+    else:
+        raise ValueError
+    return tf.tile(x, multiples)
+
 

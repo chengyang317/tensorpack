@@ -81,7 +81,7 @@ class Model(tp.ModelDesc):
 def get_config():
     basename = os.path.basename(__file__)
     tp.logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]), 'n')
+        os.path.join('train_log', basename[:basename.rfind('.')]), 'd')
 
     # prepare dataset
     dataset_train = tp.BatchData(tp.dataset.Mnist('train'), 128)

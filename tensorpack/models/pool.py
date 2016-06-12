@@ -3,13 +3,13 @@
 # File: pool.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 import tensorflow as tf
-import numpy
-
-from ._common import *
-from ..tfutils.symbolic_functions import *
+import numpy as np
+from tensorpack.models._common import *
+from tensorpack.tfutils.symbolic_functions import *
 
 __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
            'BilinearUpSample']
+
 
 @layer_register()
 def MaxPooling(x, shape, stride=None, padding='VALID'):
@@ -31,6 +31,7 @@ def MaxPooling(x, shape, stride=None, padding='VALID'):
 
     return tf.nn.max_pool(x, ksize=shape, strides=stride, padding=padding)
 
+
 @layer_register()
 def AvgPooling(x, shape, stride=None, padding='VALID'):
     """
@@ -51,6 +52,7 @@ def AvgPooling(x, shape, stride=None, padding='VALID'):
 
     return tf.nn.avg_pool(x, ksize=shape, strides=stride, padding=padding)
 
+
 @layer_register()
 def GlobalAvgPooling(x):
     """
@@ -62,6 +64,7 @@ def GlobalAvgPooling(x):
     """
     assert x.get_shape().ndims == 4
     return tf.reduce_mean(x, [1, 2])
+
 
 # https://github.com/tensorflow/tensorflow/issues/2169
 def UnPooling2x2ZeroFilled(x):
@@ -75,6 +78,7 @@ def UnPooling2x2ZeroFilled(x):
     else:
         sh = tf.shape(x)
         return tf.reshape(out, [-1, sh[1] * 2, sh[2] * 2, sh[3]])
+
 
 @layer_register()
 def FixedUnPooling(x, shape, unpool_mat=None):
@@ -172,31 +176,43 @@ def MaxPoolingWithArgmax(x, shape, stride=None, padding='VALID'):
     return tf.nn.max_pool_with_argmax(x, ksize=shape, strides=stride, padding=padding)
 
 
-def UnPooling2x2SameFilled(x):
-    # out = tf.concat(3, [x, tf.identity(x)])
-    # out = tf.concat(2, [out, tf.identity(out)])
-    # sh = x.get_shape().as_list()
-    # if None not in sh[1:]:
-    #     out_size = [-1, sh[1] * 2, sh[2] * 2, sh[3]]
-    #     return tf.reshape(out, out_size)
-    # else:
-    #     sh = tf.shape(x)
-    #     return tf.reshape(out, [-1, sh[1] * 2, sh[2] * 2, sh[3]])
-    return tf.tile(x, multiples=(1,2,2,1))
-
-
 def unpooling2x2_argmax(x, argmax):
-    unpool_x = UnPooling2x2SameFilled(x)
+    """
 
-
+    :param x: (b,h,w,c)
+    :param argmax: (b,h,w,c), ((b * height + y) * width + x) * channels + c.
+    :return:
+    """
+    assert x.get_shape().as_list() == argmax.get_shape().as_list()
+    # infer the shape as soon as possbile
+    x_shape = x.get_shape().as_list()
+    if not x_shape[0]:
+        x_shape[0] = tf.shape(x)[0]
+    unpool_x = tf.tile(x, multiples=(1, 2, 2, 1))
+    # chang argmax value from flatten index to be in range(4) for the index for a localization
+    channel_base = tensor_repeats(tf.range(x_shape[3]), [x_shape[0], x_shape[1], x_shape[2], 1], axis=1)
+    argmax = tf.div(argmax - channel_base, x_shape[3])
+    argmax_x_ind = tf.mod(argmax, x_shape[2] * 2)
+    argmax = tf.div(argmax, x_shape[2] * 2)
+    batch_base = tensor_repeats(tf.range(x_shape[0]) * x_shape[1] * 2, [1, x_shape[1], x_shape[2], x_shape[3]])
+    argmax_y_ind = argmax - batch_base
+    argmax_x_ind = tf.mod(argmax_x_ind, 2)
+    argmax_y_ind = tf.mod(argmax_y_ind, 2)
+    argmax_ind = argmax_y_ind * 2 + argmax_x_ind
+    # change argmax to (b,c,h,w)
+    argmax_ind = tf.transpose(argmax_ind, [0, 3, 1, 2])
+    # (b,c,h,w,depth)
+    template = tf.one_hot(indices=argmax, depth=4, dtype=tf.float32)
+    template = tf.depth_to_space(template, block_size=2)
+    return tf.batch_matmul(unpool_x, template)
 
 
 @layer_register()
 def ArgmaxUnPooling(x, argmax, shape, stride=None):
     """
     Unpool the input x using indices tensor argmax which is from tensorflow max_pool_with_argmax.
-    :param x:
-    :param argmax:
+    :param x: (b,h,w,c)
+    :param argmax: (b,h,w,c)
     :param shape: int or [h, w]
     :param stride: int or [h, w]. default to be shape.
     :return:
