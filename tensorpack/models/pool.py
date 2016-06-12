@@ -267,3 +267,26 @@ class TestPool(TestModel):
         self.assertTrue(diff.max() < 1e-4)
 
 
+<<<<<<< HEAD
+=======
+@layer_register()
+def MaxPoolingWithArgmax(x, shape, stride=None, padding='VALID'):
+    """
+    MaxPooling on image and while return indices
+
+    :param input: NHWC tensor.
+    :param shape: int or [h, w]
+    :param stride: int or [h, w]. default to be shape.
+    :param padding: 'valid' or 'same'. default to 'valid'
+    :returns: NHWC tensor and indices tensor NHWC where store a flatten index
+            ((b * height + y) * width + x) * channels + c.
+    """
+    padding = padding.upper()
+    shape = shape4d(shape)
+    if stride is None:
+        stride = shape
+    else:
+        stride = shape4d(stride)
+
+    return tf.nn.max_pool_with_argmax(x, ksize=shape, strides=stride, padding=padding)
+>>>>>>> 15fe0fcf78374723672c876fc1fef1e368c914d7

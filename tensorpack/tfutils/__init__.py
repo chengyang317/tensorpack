@@ -9,5 +9,9 @@ from tensorpack.tfutils.modelutils import *
 from tensorpack.tfutils.sessinit import *
 from tensorpack.tfutils.summary import *
 from tensorpack.tfutils.symbolic_functions import *
+<<<<<<< HEAD
 from tensorpack.tfutils.filler import *
 from tensorpack.tfutils.transformation import *
+=======
+from tensorpack.tfutils.paraminit import *
+>>>>>>> 15fe0fcf78374723672c876fc1fef1e368c914d7
