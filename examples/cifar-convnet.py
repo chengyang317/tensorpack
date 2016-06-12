@@ -136,13 +136,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     basename = os.path.basename(__file__)
-<<<<<<< HEAD
     tp.logger.set_logger_dir(
         os.path.join('train_log', basename[:basename.rfind('.')]), 'd')
-=======
-    logger.set_logger_dir(
-        os.path.join('train_log', basename[:basename.rfind('.')]), 'k')
->>>>>>> 15fe0fcf78374723672c876fc1fef1e368c914d7
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
