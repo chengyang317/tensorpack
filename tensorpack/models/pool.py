@@ -8,7 +8,7 @@ from tensorpack.models._common import *
 from tensorpack.tfutils.symbolic_functions import *
 
 __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
-           'BilinearUpSample']
+           'BilinearUpSample', 'MaxPoolingWithArgmax', 'ArgmaxUnPooling']
 
 
 @layer_register()
@@ -165,7 +165,8 @@ def MaxPoolingWithArgmax(x, shape, stride=None, padding='VALID'):
     :param stride: int or [h, w]. default to be shape.
     :param padding: 'valid' or 'same'. default to 'valid'
     :returns: NHWC tensor and indices tensor NHWC where store a flatten index
-            ((b * height + y) * width + x) * channels + c.
+            ((b * height + y) * width + x) * channels + c.  ###### not true, the experiment shows the index
+            does not involved with b. just as (y * width + x) * channels + c for every batch
     """
     padding = padding.upper()
     shape = shape4d(shape)
@@ -180,7 +181,7 @@ def unpooling2x2_argmax(x, argmax):
     """
 
     :param x: (b,h,w,c)
-    :param argmax: (b,h,w,c), ((b * height + y) * width + x) * channels + c.
+    :param argmax: (b,h,w,c), (y * width + x) * channels + c.
     :return:
     """
     assert x.get_shape().as_list() == argmax.get_shape().as_list()
@@ -188,23 +189,29 @@ def unpooling2x2_argmax(x, argmax):
     x_shape = x.get_shape().as_list()
     if not x_shape[0]:
         x_shape[0] = tf.shape(x)[0]
-    unpool_x = tf.tile(x, multiples=(1, 2, 2, 1))
+    unpool_x = tf.depth_to_space(tf.tile(x, multiples=(1, 1, 1, 4)), block_size=2)
     # chang argmax value from flatten index to be in range(4) for the index for a localization
-    channel_base = tensor_repeats(tf.range(x_shape[3]), [x_shape[0], x_shape[1], x_shape[2], 1], axis=1)
+    channel_base = tf.cast(tensor_repeats(tf.range(x_shape[3]), [x_shape[0], x_shape[1], x_shape[2], 1], axis=1),
+                           dtype=tf.int64)
+    # y * width + x
     argmax = tf.div(argmax - channel_base, x_shape[3])
+    # x
     argmax_x_ind = tf.mod(argmax, x_shape[2] * 2)
-    argmax = tf.div(argmax, x_shape[2] * 2)
-    batch_base = tensor_repeats(tf.range(x_shape[0]) * x_shape[1] * 2, [1, x_shape[1], x_shape[2], x_shape[3]])
-    argmax_y_ind = argmax - batch_base
+    # y
+    argmax_y_ind = tf.div(argmax, x_shape[2] * 2)
+    # ajust x, y to range(2)
     argmax_x_ind = tf.mod(argmax_x_ind, 2)
     argmax_y_ind = tf.mod(argmax_y_ind, 2)
     argmax_ind = argmax_y_ind * 2 + argmax_x_ind
-    # change argmax to (b,c,h,w)
+    # change argmax to (b*c,h,w)
     argmax_ind = tf.transpose(argmax_ind, [0, 3, 1, 2])
-    # (b,c,h,w,depth)
-    template = tf.one_hot(indices=argmax, depth=4, dtype=tf.float32)
-    template = tf.depth_to_space(template, block_size=2)
-    return tf.batch_matmul(unpool_x, template)
+    argmax_ind = tf.reshape(argmax_ind, [-1, x_shape[1], x_shape[2]])
+    # (b*c,h,w,depth)
+    template = tf.one_hot(indices=argmax_ind, depth=4, dtype=tf.float32)
+    template = tf.squeeze(tf.depth_to_space(template, block_size=2))
+    template = tf.reshape(template, [-1, x_shape[3], x_shape[1]*2, x_shape[2]*2])
+    template = tf.transpose(template, [0, 2, 3, 1])
+    return tf.mul(unpool_x, template)
 
 
 @layer_register()
@@ -224,47 +231,6 @@ def ArgmaxUnPooling(x, argmax, shape, stride=None):
 
 
 
-from ._test import TestModel
-class TestPool(TestModel):
-    def test_fixed_unpooling(self):
-        h, w = 3, 4
-        mat = np.random.rand(h, w, 3).astype('float32')
-        inp = self.make_variable(mat)
-        inp = tf.reshape(inp, [1, h, w, 3])
-        output = FixedUnPooling('unpool', inp, 2)
-        res = self.run_variable(output)
-        self.assertEqual(res.shape, (1, 2*h, 2*w, 3))
-
-        # mat is on cornser
-        ele = res[0,::2,::2,0]
-        self.assertTrue((ele == mat[:,:,0]).all())
-        # the rest are zeros
-        res[0,::2,::2,:] = 0
-        self.assertTrue((res == 0).all())
-
-    def test_upsample(self):
-        h, w = 5, 5
-        scale = 2
-
-        mat = np.random.rand(h, w).astype('float32')
-        inp = self.make_variable(mat)
-        inp = tf.reshape(inp, [1, h, w, 1])
-
-        output = BilinearUpSample('upsample', inp, scale)
-        res = self.run_variable(output)
-
-        from skimage.transform import rescale
-        res2 = rescale(mat, scale)
-
-        diff = np.abs(res2 - res[0,:,:,0])
-
-        # not equivalent to rescale on edge
-        diff[0,:] = 0
-        diff[:,0] = 0
-        if not diff.max() < 1e-4:
-            import IPython;
-            IPython.embed(config=IPython.terminal.ipapp.load_default_config())
-        self.assertTrue(diff.max() < 1e-4)
 
 
 
