@@ -6,13 +6,17 @@
 import os, glob
 import cv2
 import numpy as np
-from scipy.io import loadmat
-from ...utils import logger, get_rng
+
+from ...utils import logger, get_rng, get_dataset_dir
 from ...utils.fs import download
 from ..base import DataFlow
 
-__all__ = ['BSDS500']
-
+try:
+    from scipy.io import loadmat
+    __all__ = ['BSDS500']
+except ImportError:
+    logger.warn("Cannot import scipy. BSDS500 dataset won't be available!")
+    __all__ = []
 
 DATA_URL = "http://www.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/BSR/BSR_bsds500.tgz"
 IMG_W, IMG_H = 481, 321
@@ -36,7 +40,7 @@ class BSDS500(DataFlow):
         """
         # check and download data
         if data_dir is None:
-            data_dir = os.path.join(os.path.dirname(__file__), 'bsds500_data')
+            data_dir = get_dataset_dir('bsds500_data')
         if not os.path.isdir(os.path.join(data_dir, 'BSR')):
             download(DATA_URL, data_dir)
             filename = DATA_URL.split('/')[-1]

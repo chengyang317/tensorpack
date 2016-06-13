@@ -13,7 +13,7 @@ from six.moves import urllib, range
 import copy
 import logging
 
-from ...utils import logger, get_rng
+from ...utils import logger, get_rng, get_dataset_dir
 from ...utils.fs import download
 from ..base import DataFlow
 
@@ -92,8 +92,7 @@ class CifarBase(DataFlow):
         assert cifar_classnum == 10 or cifar_classnum == 100
         self.cifar_classnum = cifar_classnum
         if dir is None:
-            dir = os.path.join(os.path.dirname(__file__),
-                    'cifar{}_data'.format(cifar_classnum))
+            dir = get_dataset_dir('cifar{}_data'.format(cifar_classnum))
         maybe_download_and_extract(dir, self.cifar_classnum)
         fnames = get_filenames(dir, cifar_classnum)
         if train_or_test == 'train':

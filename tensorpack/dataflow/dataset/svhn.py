@@ -6,14 +6,17 @@
 import os
 import random
 import numpy as np
-import scipy
-import scipy.io
 from six.moves import range
 
-from ...utils import logger, get_rng
+from ...utils import logger, get_rng, get_dataset_dir
 from ..base import DataFlow
 
-__all__ = ['SVHNDigit']
+try:
+    import scipy.io
+    __all__ = ['SVHNDigit']
+except ImportError:
+    logger.warn("Cannot import scipy. SVHNDigit dataset won't be available!")
+    __all__ = []
 
 SVHN_URL = "http://ufldl.stanford.edu/housenumbers/"
 
@@ -36,9 +39,7 @@ class SVHNDigit(DataFlow):
             self.X, self.Y = SVHNDigit.Cache[name]
             return
         if data_dir is None:
-            data_dir = os.path.join(
-                os.path.dirname(__file__),
-                'svhn_data')
+            data_dir = get_dataset_dir('svhn_data')
         assert name in ['train', 'test', 'extra'], name
         filename = os.path.join(data_dir, name + '_32x32.mat')
         assert os.path.isfile(filename), \

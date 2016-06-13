@@ -7,6 +7,7 @@ import tensorflow as tf
 from abc import abstractmethod, ABCMeta, abstractproperty
 import operator
 import six
+import os
 
 from .base import Callback
 from ..utils import logger
@@ -29,6 +30,7 @@ class HyperParam(object):
         """ define how the value of the param will be set"""
         pass
 
+    @property
     def readable_name(self):
         """ A name to display"""
         return self._readable_name
@@ -128,7 +130,7 @@ class HumanHyperParamSetter(HyperParamSetter):
         """
         super(HumanHyperParamSetter, self).__init__(param)
         self.file_name = os.path.join(logger.LOG_DIR, file_name)
-        logger.info("Use {} for hyperparam {}.".format(
+        logger.info("Use {} to control hyperparam {}.".format(
             self.file_name, self.param.readable_name))
 
     def _get_value_to_set(self):

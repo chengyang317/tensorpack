@@ -7,9 +7,10 @@ import numpy as np
 import time, os
 import cv2
 from collections import deque
+import threading
 import six
 from six.moves import range
-from ..utils import get_rng, logger, memoized
+from ..utils import get_rng, logger, memoized, get_dataset_dir
 from ..utils.stat import StatCounter
 
 from .envbase import RLEnvironment, DiscreteActionSpace
@@ -25,9 +26,12 @@ __all__ = ['AtariPlayer']
 def log_once():
     logger.warn("https://github.com/mgbellemare/Arcade-Learning-Environment/pull/171 is not merged!")
 
+_ALE_LOCK = threading.Lock()
+
 class AtariPlayer(RLEnvironment):
     """
     A wrapper for atari emulator.
+    NOTE: will automatically restart when a real episode ends
     """
     def __init__(self, rom_file, viz=0, height_range=(None,None),
             frame_skip=4, image_shape=(84, 84), nullop_start=30,
@@ -45,36 +49,42 @@ class AtariPlayer(RLEnvironment):
         :param live_losts_as_eoe: consider lost of lives as end of episode.  useful for training.
         """
         super(AtariPlayer, self).__init__()
-        self.ale = ALEInterface()
-        self.rng = get_rng(self)
-
-        self.ale.setInt("random_seed", self.rng.randint(0, 10000))
-        self.ale.setBool("showinfo", False)
+        if not os.path.isfile(rom_file) and '/' not in rom_file:
+            rom_file = os.path.join(get_dataset_dir('atari_rom'), rom_file)
+        assert os.path.isfile(rom_file), "rom {} not found".format(rom_file)
 
         try:
             ALEInterface.setLoggerMode(ALEInterface.Logger.Warning)
         except AttributeError:
             log_once()
 
-        self.ale.setInt("frame_skip", 1)
-        self.ale.setBool('color_averaging', False)
-        # manual.pdf suggests otherwise. may need to check
-        self.ale.setFloat('repeat_action_probability', 0.0)
+        # avoid simulator bugs: https://github.com/mgbellemare/Arcade-Learning-Environment/issues/86
+        with _ALE_LOCK:
+            self.ale = ALEInterface()
+            self.rng = get_rng(self)
 
-        # viz setup
-        if isinstance(viz, six.string_types):
-            assert os.path.isdir(viz), viz
-            self.ale.setString('record_screen_dir', viz)
-            viz = 0
-        if isinstance(viz, int):
-            viz = float(viz)
-        self.viz = viz
-        if self.viz and isinstance(self.viz, float):
-            self.windowname = os.path.basename(rom_file)
-            cv2.startWindowThread()
-            cv2.namedWindow(self.windowname)
+            self.ale.setInt("random_seed", self.rng.randint(0, 10000))
+            self.ale.setBool("showinfo", False)
 
-        self.ale.loadROM(rom_file)
+            self.ale.setInt("frame_skip", 1)
+            self.ale.setBool('color_averaging', False)
+            # manual.pdf suggests otherwise.
+            self.ale.setFloat('repeat_action_probability', 0.0)
+
+            # viz setup
+            if isinstance(viz, six.string_types):
+                assert os.path.isdir(viz), viz
+                self.ale.setString('record_screen_dir', viz)
+                viz = 0
+            if isinstance(viz, int):
+                viz = float(viz)
+            self.viz = viz
+            if self.viz and isinstance(self.viz, float):
+                self.windowname = os.path.basename(rom_file)
+                cv2.startWindowThread()
+                cv2.namedWindow(self.windowname)
+
+            self.ale.loadROM(rom_file)
         self.width, self.height = self.ale.getScreenDims()
         self.actions = self.ale.getMinimalActionSet()
 
@@ -97,7 +107,7 @@ class AtariPlayer(RLEnvironment):
 
     def current_state(self):
         """
-        :returns: a gray-scale (h, w, 1) image
+        :returns: a gray-scale (h, w, 1) float32 image
         """
         ret = self._grab_raw_image()
         # max-pooled over the last screen
@@ -107,7 +117,7 @@ class AtariPlayer(RLEnvironment):
                 #m = cv2.resize(ret, (1920,1200))
                 cv2.imshow(self.windowname, ret)
                 time.sleep(self.viz)
-        ret = ret[self.height_range[0]:self.height_range[1],:]
+        ret = ret[self.height_range[0]:self.height_range[1],:].astype('float32')
         # 0.299,0.587.0.114. same as rgb2y in torch/image
         ret = cv2.cvtColor(ret, cv2.COLOR_RGB2GRAY)
         ret = cv2.resize(ret, self.image_shape)
@@ -154,13 +164,6 @@ class AtariPlayer(RLEnvironment):
         if self.live_lost_as_eoe:
             isOver = isOver or newlives < oldlives
         return (r, isOver)
-
-    def get_stat(self):
-        try:
-            return {'avg_score': np.mean(self.stats['score']),
-                    'max_score': float(np.max(self.stats['score'])) }
-        except ValueError:
-            return {}
 
 if __name__ == '__main__':
     import sys

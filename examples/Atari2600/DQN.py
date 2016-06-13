@@ -14,12 +14,8 @@ import multiprocessing, threading
 from collections import deque
 
 from tensorpack import *
-from tensorpack.models import  *
-from tensorpack.utils import  *
 from tensorpack.utils.concurrency import *
 from tensorpack.tfutils import symbolic_functions as symbf
-from tensorpack.callbacks import *
-
 from tensorpack.RL import *
 import common
 from common import play_model, Evaluator, eval_model_multithread
@@ -137,6 +133,7 @@ class Model(ModelDesc):
                 SummaryGradient()]
 
     def predictor(self, state):
+        # TODO change to a multitower predictor for speedup
         return self.predict_value.eval(feed_dict={'state:0': [state]})[0]
 
 def get_config():
@@ -171,10 +168,10 @@ def get_config():
             HumanHyperParamSetter(ObjAttrParam(dataset_train, 'exploration'), 'hyper.txt'),
             RunOp(lambda: M.update_target_param()),
             dataset_train,
-            PeriodicCallback(Evaluator(EVAL_EPISODE, 'fct/output:0'), 2),
+            PeriodicCallback(Evaluator(EVAL_EPISODE, ['state'], ['fct/output']), 2),
         ]),
         # save memory for multiprocess evaluator
-        session_config=get_default_sess_config(0.3),
+        session_config=get_default_sess_config(0.6),
         model=M,
         step_per_epoch=STEP_PER_EPOCH,
     )
@@ -208,4 +205,6 @@ if __name__ == '__main__':
         if args.load:
             config.session_init = SaverRestore(args.load)
         SimpleTrainer(config).train()
+        #QueueInputTrainer(config).train()
+        # TODO test if QueueInput affects learning
 

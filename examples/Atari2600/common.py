@@ -52,7 +52,6 @@ def eval_with_funcs(predict_funcs, nr_eval):
 
     for k in threads:
         k.start()
-        time.sleep(0.1) # avoid simulator bugs
     stat = StatCounter()
     try:
         for _ in tqdm(range(nr_eval)):
@@ -75,14 +74,15 @@ def eval_model_multithread(cfg, nr_eval):
     logger.info("Average Score: {}; Max Score: {}".format(mean, max))
 
 class Evaluator(Callback):
-    def __init__(self, nr_eval, output_name):
+    def __init__(self, nr_eval, input_names, output_names):
         self.eval_episode = nr_eval
-        self.output_name = output_name
+        self.input_names = input_names
+        self.output_names = output_names
 
     def _before_train(self):
         NR_PROC = min(multiprocessing.cpu_count() // 2, 8)
         self.pred_funcs = [self.trainer.get_predict_func(
-           ['state'], [self.output_name])] * NR_PROC
+            self.input_names, self.output_names)] * NR_PROC
 
     def _trigger_epoch(self):
         t = time.time()
