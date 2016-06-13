@@ -12,35 +12,32 @@ class Model(tp.ModelDesc):
     def _build_graph(self, inputs, is_training):
         is_training = bool(is_training)
         image, label = inputs
-        with tp.argscope(tp.Conv2D, kernel_shape=3, w_init_config=tp.FillerConfig(type='msra')):
+        with tp.argscope(tp.Conv2D, kernel_shape=3, w_init_config=tp.FillerConfig(type='msra'),
+                         nl=tp.BNReLU(is_training)):
             l = tp.Conv2D('conv1_1', image, 64)
             l = tp.Conv2D('conv1_2', l, 64)
-            l = tp.MaxPooling('pool1', l, 2)
+            l, pool1_mask = tp.MaxPoolingWithArgmax('pool1', l, 2)
 
-            l = Conv2D('conv2_1', l, 128)
-            l = Conv2D('conv2_2', l, 128)
-            l = MaxPooling('pool2', l, 2)
-            # 56
+            l = tp.Conv2D('conv2_1', l, 128)
+            l = tp.Conv2D('conv2_2', l, 128)
+            l, pool2_mask = tp.MaxPoolingWithArgmax('pool2', l, 2)
 
-            l = Conv2D('conv3_1', l, 256)
-            l = Conv2D('conv3_2', l, 256)
-            l = Conv2D('conv3_3', l, 256)
-            l = MaxPooling('pool3', l, 2)
-            # 28
+            l = tp.Conv2D('conv3_1', l, 256)
+            l = tp.Conv2D('conv3_2', l, 256)
+            l = tp.Conv2D('conv3_3', l, 256)
+            l, pool3_mask = tp.MaxPoolingWithArgmax('pool3', l, 2)
 
-            l = Conv2D('conv4_1', l, 512)
-            l = Conv2D('conv4_2', l, 512)
-            l = Conv2D('conv4_3', l, 512)
-            l = MaxPooling('pool4', l, 2)
-            # 14
+            l = tp.Conv2D('conv4_1', l, 512)
+            l = tp.Conv2D('conv4_2', l, 512)
+            l = tp.Conv2D('conv4_3', l, 512)
+            l, pool4_mask = tp.MaxPoolingWithArgmax('pool4', l, 2)
 
-            l = Conv2D('conv5_1', l, 512)
-            l = Conv2D('conv5_2', l, 512)
-            l = Conv2D('conv5_3', l, 512)
-            l = MaxPooling('pool5', l, 2)
-        # 7
+            l = tp.Conv2D('conv5_1', l, 512)
+            l = tp.Conv2D('conv5_2', l, 512)
+            l = tp.Conv2D('conv5_3', l, 512)
+            l, pool5_mask = tp.MaxPoolingWithArgmax('pool5', l, 2)
 
-        l = FullyConnected('fc6', l, 4096)
+        l = tp.FullyConnected('fc6', l, 4096)
         l = tf.nn.dropout(l, keep_prob)
         l = FullyConnected('fc7', l, 4096)
         l = tf.nn.dropout(l, keep_prob)
