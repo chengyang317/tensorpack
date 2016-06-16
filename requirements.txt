@@ -1,6 +1,13 @@
+pandas
 tensorflow
 termcolor
 pillow
 tqdm
 msgpack
 msgpack-numpy
+beautifulsoup4
+more_itertools
+matplotlib
+bs4
+msgpack-python
+msgpack_numpy

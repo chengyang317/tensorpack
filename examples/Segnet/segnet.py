@@ -1,6 +1,8 @@
-import tensorflow as tf
-import tensorpack as tp
 import argparse
+
+import tensorflow as tf
+
+import tensorpack as tp
 
 BATCH_SIZE = 4
 
@@ -17,32 +19,58 @@ class Model(tp.ModelDesc):
             l = tp.Conv2D('conv1_1', image, 64)
             l = tp.Conv2D('conv1_2', l, 64)
             l, pool1_mask = tp.MaxPoolingWithArgmax('pool1', l, 2)
-
             l = tp.Conv2D('conv2_1', l, 128)
             l = tp.Conv2D('conv2_2', l, 128)
             l, pool2_mask = tp.MaxPoolingWithArgmax('pool2', l, 2)
-
             l = tp.Conv2D('conv3_1', l, 256)
             l = tp.Conv2D('conv3_2', l, 256)
             l = tp.Conv2D('conv3_3', l, 256)
             l, pool3_mask = tp.MaxPoolingWithArgmax('pool3', l, 2)
-
             l = tp.Conv2D('conv4_1', l, 512)
             l = tp.Conv2D('conv4_2', l, 512)
             l = tp.Conv2D('conv4_3', l, 512)
             l, pool4_mask = tp.MaxPoolingWithArgmax('pool4', l, 2)
-
             l = tp.Conv2D('conv5_1', l, 512)
             l = tp.Conv2D('conv5_2', l, 512)
             l = tp.Conv2D('conv5_3', l, 512)
             l, pool5_mask = tp.MaxPoolingWithArgmax('pool5', l, 2)
 
-        l = tp.FullyConnected('fc6', l, 4096)
-        l = tf.nn.dropout(l, keep_prob)
-        l = FullyConnected('fc7', l, 4096)
-        l = tf.nn.dropout(l, keep_prob)
-        logits = FullyConnected('fc8', l, out_dim=1000, nl=tf.identity)
-        prob = tf.nn.softmax(logits, name='output')
+            l = tp.ArgmaxUnPooling('upsample5', x=l, argmax=pool5_mask, shape=2, stride=2)
+            l = tp.Conv2D('conv5_3_D', l, 512)
+            l = tp.Conv2D('conv5_2_D', l, 512)
+            l = tp.Conv2D('conv5_1_D', l, 512)
+            l = tp.ArgmaxUnPooling('upsample4', x=l, argmax=pool4_mask, shape=2, stride=2)
+            l = tp.Conv2D('conv4_3_D', l, 512)
+            l = tp.Conv2D('conv4_2_D', l, 512)
+            l = tp.Conv2D('conv4_1_D', l, 256)
+            l = tp.ArgmaxUnPooling('upsample3', x=l, argmax=pool3_mask, shape=2, stride=2)
+            l = tp.Conv2D('conv3_3_D', l, 256)
+            l = tp.Conv2D('conv3_2_D', l, 256)
+            l = tp.Conv2D('conv3_1_D', l, 128)
+            l = tp.ArgmaxUnPooling('upsample2', x=l, argmax=pool2_mask, shape=2, stride=2)
+            l = tp.Conv2D('conv2_2_D', l, 128)
+            l = tp.Conv2D('conv2_1_D', l, 64)
+            l = tp.ArgmaxUnPooling('upsample1', x=l, argmax=pool1_mask, shape=2, stride=2)
+            l = tp.Conv2D('conv1_2_D', l, 64)
+            logits = tp.Conv2D('conv1_1_D', l, 11)
+
+            pos_weight = [0.2595, 0.1826, 4.5640, 0.1417, 0.9051, 0.3826, 9.6446, 1.8418, 0.6823, 6.2478, 7.3614]
+            cost = tf.nn.weighted_cross_entropy_with_logits(logits=logits, targets=label, pos_weight=pos_weight)
+            cost = tf.reduce_mean(cost, name='cross_entropy_loss')
+            tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, cost)
+
+            # compute the number of failed samples, for ClassificationError to use at test time
+            wrong = tp.prediction_incorrect(logits, label)
+            nr_wrong = tf.reduce_sum(wrong, name='wrong')
+            # monitor training error
+            tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
+
+            # weight decay on all W of fc layers
+            wd_cost = tf.mul(0.0005, tp.regularize_cost('conv.*/W', tf.nn.l2_loss), name='regularize_loss')
+            tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, wd_cost)
+
+            tp.add_param_summary([('.*/W', ['histogram'])])  # monitor W
+            self.cost = tf.add_n([cost, wd_cost], name='cost')
 
 
 def get_data(train_or_test, cifar_classnum):

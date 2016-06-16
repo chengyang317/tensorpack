@@ -3,8 +3,12 @@
 # File: fs.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import os, sys
+import os
+import sys
+
 from six.moves import urllib
+
+__all__ = ['mkdir_p', 'download', 'get_subdirs']
 
 def mkdir_p(dirname):
     """ make a dir recursively, but do nothing if the dir exists"""
@@ -32,6 +36,13 @@ def download(url, dir):
     sys.stdout.write('\n')
     print('Succesfully downloaded ' + fname + " " + str(statinfo.st_size) + ' bytes.')
     return fpath
+
+
+def get_subdirs(dir):
+    files = os.listdir(dir)
+    subdirs = [file for file in files if os.path.isdir(os.path.join(dir, file))]
+    return subdirs
+
 
 if __name__ == '__main__':
     download('http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz', '.')
