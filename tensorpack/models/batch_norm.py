@@ -2,21 +2,18 @@
 # -*- coding: UTF-8 -*-
 # File: batch_norm.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
-
 import tensorflow as tf
-from copy import copy
 import re
-
-from ..utils import logger
-from ._common import layer_register
+from tensorpack.models.utils import *
 
 __all__ = ['BatchNorm']
+
 
 # http://stackoverflow.com/questions/33949786/how-could-i-use-batch-normalization-in-tensorflow
 # TF batch_norm only works for 4D tensor right now: #804
 # decay: being too close to 1 leads to slow start-up. torch use 0.9.
 # eps: torch: 1e-5. Lasagne: 1e-4
-@layer_register(log_shape=False)
+@layer.register(log_shape=False)
 def BatchNorm(x, use_local_stat=True, decay=0.9, epsilon=1e-5):
     """
     Batch normalization layer as described in:

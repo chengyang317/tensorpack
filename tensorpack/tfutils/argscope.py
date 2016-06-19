@@ -8,36 +8,45 @@ import inspect
 import copy
 import six
 
-__all__ = ['argscope', 'get_arg_scope']
-
-_ArgScopeStack = []
+__all__ = ['argscope']
 
 
-@contextmanager
-def argscope(layers, **kwargs):
-    param = kwargs
-    if not isinstance(layers, list):
-        layers = [layers]
+class Argscope(object):
+    def __init__(self):
+        self.argscope_stack = []
 
-    def _check_args_exist(l):
-        args = inspect.getargspec(l).args
-        for k, v in six.iteritems(param):
-            assert k in args, "No argument {} in {}".format(k, l.__name__)
+    @staticmethod
+    def check_args_exist(layer_func, params):
+        layer_func_args = inspect.getargspec(layer_func).args
+        for k, v in six.iteritems(params):
+            assert k in layer_func_args, "No argument {} in {}".format(k, layer_func.__name__)
 
-    for l in layers:
-        assert hasattr(l, 'f'), "{} is not a registered layer".format(l.__name__)
-        _check_args_exist(l.f)
+    def get_arg_scope(self):
+        if len(self.argscope_stack) > 0:
+            return self.argscope_stack[-1]
+        else:
+            return defaultdict(dict)
 
-    new_scope = copy.copy(get_arg_scope())
-    for l in layers:
-        new_scope[l.__name__].update(param)
-    _ArgScopeStack.append(new_scope)
-    yield
-    del _ArgScopeStack[-1]
+    @contextmanager
+    def scope(self, layer_funcs, **kwargs):
+        """
+
+        :param layer_funcs: such as Conv2D
+        :param kwargs:
+        :return:
+        """
+        params = kwargs
+        if not isinstance(layer_funcs, list):
+            layer_funcs = [layer_funcs]
+        for layer_func in layer_funcs:
+            assert hasattr(layer_func, 'f'), "{} is not a registered layer".format(layer_func.__name__)
+            self.check_args_exist(layer_func.f, params)
+        new_scope = copy.copy(self.get_arg_scope())
+        for layer_func in layer_funcs:
+            new_scope[layer_func.__name__].update(params)
+        self.argscope_stack.append(new_scope)
+        yield
+        del self.argscope_stack[-1]
 
 
-def get_arg_scope():
-    if len(_ArgScopeStack) > 0:
-        return _ArgScopeStack[-1]
-    else:
-        return defaultdict(dict)
+argscope = Argscope()
