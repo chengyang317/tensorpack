@@ -7,6 +7,7 @@ import numpy as np
 
 __all__ = ['Brightness', 'Contrast', 'MeanVarianceNormalize']
 
+
 class Brightness(ImageAugmentor):
     """
     Random adjust brightness.
@@ -27,6 +28,7 @@ class Brightness(ImageAugmentor):
         if self.clip:
             img = np.clip(img, 0, 255)
         return img
+
 
 class Contrast(ImageAugmentor):
     """
@@ -49,6 +51,7 @@ class Contrast(ImageAugmentor):
         if self.clip:
             img = np.clip(img, 0, 255)
         return img
+
 
 class MeanVarianceNormalize(ImageAugmentor):
     """

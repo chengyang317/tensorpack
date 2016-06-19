@@ -22,7 +22,7 @@ def create_test_graph(trainer):
             0, trainable=False, name=GLOBAL_STEP_OP_NAME)
         input_vars = model.get_input_vars()
         model.build_graph(input_vars, False)
-        cost = model.get_cost()
+        cost = model.get_loss()
         yield Gtest
 
 @contextmanager

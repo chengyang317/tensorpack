@@ -8,6 +8,7 @@ from six.moves import zip
 
 __all__ = ['ImageAugmentor', 'AugmentorList']
 
+
 class ImageAugmentor(object):
     """ Base class for an image augmentor"""
     __metaclass__ = ABCMeta
@@ -62,6 +63,7 @@ class ImageAugmentor(object):
         if size == None:
             size = []
         return low + self.rng.rand(*size) * (high - low)
+
 
 class AugmentorList(ImageAugmentor):
     """

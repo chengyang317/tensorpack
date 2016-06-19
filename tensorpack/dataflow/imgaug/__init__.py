@@ -8,5 +8,4 @@ from tensorpack.dataflow.imgaug.deform import *
 from tensorpack.dataflow.imgaug.imgproc import *
 from tensorpack.dataflow.imgaug.noname import *
 from tensorpack.dataflow.imgaug.paste import *
-
-
+from tensorpack.dataflow.imgaug.pad import *

@@ -12,6 +12,7 @@ __all__ = ['argscope', 'get_arg_scope']
 
 _ArgScopeStack = []
 
+
 @contextmanager
 def argscope(layers, **kwargs):
     param = kwargs
@@ -33,6 +34,7 @@ def argscope(layers, **kwargs):
     _ArgScopeStack.append(new_scope)
     yield
     del _ArgScopeStack[-1]
+
 
 def get_arg_scope():
     if len(_ArgScopeStack) > 0:

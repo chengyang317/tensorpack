@@ -8,6 +8,7 @@ import cv2
 
 __all__ = ['Flip', 'MapImage', 'Resize']
 
+
 class Flip(ImageAugmentor):
     """
     Random flip.

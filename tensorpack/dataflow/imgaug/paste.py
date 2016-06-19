@@ -8,7 +8,7 @@ from .base import ImageAugmentor
 from abc import abstractmethod
 import numpy as np
 
-__all__ = [ 'CenterPaste', 'ConstantBackgroundFiller']
+__all__ = ['CenterPaste', 'ConstantBackgroundFiller']
 
 
 class BackgroundFiller(object):
@@ -27,6 +27,7 @@ class BackgroundFiller(object):
     def _fill(self, background_shape, img):
         pass
 
+
 class ConstantBackgroundFiller(BackgroundFiller):
     """ Fill the background by a constant """
     def __init__(self, value):
@@ -42,6 +43,7 @@ class ConstantBackgroundFiller(BackgroundFiller):
         else:
             return_shape = background_shape
         return np.zeros(return_shape) + self.value
+
 
 class CenterPaste(ImageAugmentor):
     """

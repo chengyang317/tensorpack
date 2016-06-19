@@ -8,6 +8,7 @@ from abc import abstractmethod, ABCMeta
 
 __all__ = ['DataFlow', 'ProxyDataFlow']
 
+
 class DataFlow(object):
     """ Base class for all DataFlow """
     __metaclass__ = ABCMeta
@@ -34,6 +35,7 @@ class DataFlow(object):
         processes will have the same RNG state.
         """
         pass
+
 
 class ProxyDataFlow(DataFlow):
     """ Base class for DataFlow that proxies another"""

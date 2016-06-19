@@ -26,7 +26,7 @@ class SimpleTrainer(Trainer):
         model = self.model
         self.input_vars = model.get_input_vars()
         model.build_graph(self.input_vars, True)
-        cost_var = model.get_cost()
+        cost_var = model.get_loss()
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost_var)
 
         grads = self.config.optimizer.compute_gradients(cost_var)
@@ -144,7 +144,7 @@ class QueueInputTrainer(Trainer):
         """ Get grad and cost for single-tower"""
         self.dequed_inputs = model_inputs = self._get_model_inputs()
         self.model.build_graph(self.dequed_inputs, True)
-        cost_var = self.model.get_cost()
+        cost_var = self.model.get_loss()
         grads = self.config.optimizer.compute_gradients(cost_var)
         tf.add_to_collection(MOVING_SUMMARY_VARS_KEY, cost_var)
         return grads

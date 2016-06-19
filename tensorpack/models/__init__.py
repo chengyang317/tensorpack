@@ -11,4 +11,6 @@ from tensorpack.models.nonlin import *
 from tensorpack.models.pool import *
 from tensorpack.models.regularize import *
 from tensorpack.models.spatial_transformer import *
-
+from tensorpack.models.loss import *
+from tensorpack.models.accuracy import *
+from tensorpack.models.utils import *

@@ -9,10 +9,9 @@ from six.moves import range
 from .base import DataFlow, ProxyDataFlow
 from ..utils import *
 
-__all__ = ['BatchData', 'FixedSizeData', 'FakeData', 'MapData',
-           'RepeatedData', 'MapDataComponent', 'RandomChooseData',
-           'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent',
-           'DataFromQueue']
+__all__ = ['BatchData', 'FixedSizeData', 'FakeData', 'MapData', 'RepeatedData', 'MapDataComponent', 'RandomChooseData',
+           'RandomMixData', 'JoinData', 'ConcatData', 'SelectComponent', 'DataFromQueue']
+
 
 class BatchData(ProxyDataFlow):
     def __init__(self, ds, batch_size, remainder=False):
@@ -71,6 +70,7 @@ class BatchData(ProxyDataFlow):
                 np.array([x[k] for x in data_holder], dtype=tp))
         return result
 
+
 class FixedSizeData(ProxyDataFlow):
     """ Generate data from another DataFlow, but with a fixed epoch size.
         The state of the underlying DataFlow is maintained among each epoch.
@@ -106,6 +106,7 @@ class FixedSizeData(ProxyDataFlow):
             if cnt == self._size:
                 return
 
+
 class RepeatedData(ProxyDataFlow):
     """ Take data points from another `DataFlow` and produce them until
         it's exhausted for certain amount of times.
@@ -134,6 +135,7 @@ class RepeatedData(ProxyDataFlow):
                 for dp in self.ds.get_data():
                     yield dp
 
+
 class FakeData(DataFlow):
     """ Generate fake random data of given shapes"""
     def __init__(self, shapes, size):
@@ -153,6 +155,7 @@ class FakeData(DataFlow):
             yield [self.rng.random_sample(k).astype('float32') for k in self.shapes]
             #yield [self.rng.random_sample(k) for k in self.shapes]
 
+
 class MapData(ProxyDataFlow):
     """ Apply map/filter a function on the datapoint"""
     def __init__(self, ds, func):
@@ -170,6 +173,7 @@ class MapData(ProxyDataFlow):
             ret = self.func(dp)
             if ret is not None:
                 yield ret
+
 
 class MapDataComponent(ProxyDataFlow):
     """ Apply map/filter on the given index in the datapoint"""

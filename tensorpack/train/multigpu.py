@@ -47,7 +47,7 @@ class MultiGPUTrainer(QueueInputTrainer):
                 self.dequed_inputs.append(model_inputs)
 
                 self.model.build_graph(model_inputs, True)
-                cost_var = self.model.get_cost() # build tower
+                cost_var = self.model.get_loss()  # build tower
 
                 # TODO gate_gradienst=0 seems to be faster?
                 grad_list.append(

@@ -3,19 +3,19 @@
 # File: dataset.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-from six.moves import range
-from tqdm import tqdm
 from abc import ABCMeta, abstractmethod
 
-from ..dataflow import DataFlow, BatchData
+from six.moves import range
+from tqdm import tqdm
+
+from .common import *
+from .concurrency import MultiProcessQueuePredictWorker
+from ..dataflow import DataFlow
 from ..dataflow.dftools import dataflow_to_process_queue
 from ..utils.concurrency import ensure_proc_terminate, OrderedResultGatherProc, DIE
 
-from .concurrency import MultiProcessQueuePredictWorker
-from .common import *
+__all__ = ['DatasetPredictorBase', 'SimpleDatasetPredictor', 'MultiProcessDatasetPredictor']
 
-__all__ = ['DatasetPredictorBase', 'SimpleDatasetPredictor',
-        'MultiProcessDatasetPredictor']
 
 class DatasetPredictorBase(object):
     __metaclass__ = ABCMeta
@@ -41,6 +41,7 @@ class DatasetPredictorBase(object):
         """
         return list(self.get_result())
 
+
 class SimpleDatasetPredictor(DatasetPredictorBase):
     """
     Run the predict_config on a given `DataFlow`.
@@ -59,6 +60,7 @@ class SimpleDatasetPredictor(DatasetPredictorBase):
                 else:
                     yield res
                 pbar.update()
+
 
 class MultiProcessDatasetPredictor(DatasetPredictorBase):
     def __init__(self, config, dataset, nr_proc, use_gpu=True):
@@ -118,4 +120,5 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
         self.result_queue.join()
         self.result_queue.terminate()
         for p in self.workers:
-            p.join(); p.terminate()
+            p.join()
+            p.terminate()

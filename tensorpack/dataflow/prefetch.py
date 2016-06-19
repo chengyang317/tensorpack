@@ -87,6 +87,7 @@ class PrefetchProcessZMQ(multiprocessing.Process):
             for dp in self.ds.get_data():
                 self.socket.send(dumps(dp), copy=False)
 
+
 class PrefetchDataZMQ(ProxyDataFlow):
     """ Work the same as `PrefetchData`, but faster. """
     def __init__(self, ds, nr_proc=1):

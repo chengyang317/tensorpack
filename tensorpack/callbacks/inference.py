@@ -2,21 +2,19 @@
 # File: inference.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import tensorflow as tf
-import numpy as np
-from tqdm import tqdm
 from abc import ABCMeta, abstractmethod
-from six.moves import zip, map
 
-from ..dataflow import DataFlow
-from ..utils import *
-from ..utils.stat import *
-from ..tfutils import *
-from ..tfutils.summary import *
+import numpy as np
+from six.moves import zip
+from tqdm import tqdm
+
 from .base import Callback
+from ..dataflow import DataFlow
+from ..tfutils import *
+from ..utils.stat import *
 
-__all__ = ['InferenceRunner', 'ClassificationError',
-        'ScalarStats', 'Inferencer', 'BinaryClassificationStats']
+__all__ = ['InferenceRunner', 'ClassificationError', 'ScalarStats', 'Inferencer', 'BinaryClassificationStats']
+
 
 class Inferencer(object):
     __metaclass__ = ABCMeta
@@ -58,6 +56,7 @@ class Inferencer(object):
     @abstractmethod
     def _get_output_tensors(self):
         pass
+
 
 class InferenceRunner(Callback):
     """
@@ -119,6 +118,7 @@ class InferenceRunner(Callback):
         for vc in self.vcs:
             vc.after_inference()
 
+
 class ScalarStats(Inferencer):
     """
     Write stat and summary of some scalar tensor.
@@ -154,6 +154,7 @@ class ScalarStats(Inferencer):
             name = '{}_{}'.format(self.prefix, opname) if self.prefix else opname
             self.trainer.write_scalar_summary(name, stat)
 
+
 class ClassificationError(Inferencer):
     """
     Compute classification error from a `wrong` variable
@@ -187,6 +188,7 @@ class ClassificationError(Inferencer):
 
     def _after_inference(self):
         self.trainer.write_scalar_summary(self.summary_name, self.err_stat.accuracy)
+
 
 class BinaryClassificationStats(Inferencer):
     """ Compute precision/recall in binary classification, given the

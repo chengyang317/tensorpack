@@ -3,22 +3,17 @@
 # File: common.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-from ..utils.naming import *
-import tensorflow as tf
-from copy import copy
-import six
 from contextlib import contextmanager
+from copy import copy
 
-__all__ = ['get_default_sess_config',
-           'get_global_step',
-           'get_global_step_var',
-           'get_op_var_name',
-           'get_vars_by_names',
-           'get_elems_by_keys',
-           'backup_collection',
-           'restore_collection',
-           'clear_collection',
-           'freeze_collection']
+import six
+import tensorflow as tf
+
+from ..utils.naming import *
+
+__all__ = ['get_default_sess_config', 'get_global_step', 'get_global_step_var', 'get_op_var_name', 'get_vars_by_names',
+           'get_elems_by_keys', 'backup_collection', 'restore_collection', 'clear_collection', 'freeze_collection']
+
 
 def get_default_sess_config(mem_fraction=0.9):
     """
@@ -36,6 +31,7 @@ def get_default_sess_config(mem_fraction=0.9):
     #conf.log_device_placement = True
     return conf
 
+
 def get_global_step_var():
     """ :returns: the global_step variable in the current graph. create if not existed"""
     try:
@@ -45,11 +41,13 @@ def get_global_step_var():
             0, trainable=False, name=GLOBAL_STEP_OP_NAME)
         return var
 
+
 def get_global_step():
     """ :returns: global_step value in current graph and session"""
     return tf.train.global_step(
         tf.get_default_session(),
         get_global_step_var())
+
 
 def get_op_var_name(name):
     """
@@ -63,6 +61,7 @@ def get_op_var_name(name):
     else:
         return name, name + ':0'
 
+
 def get_vars_by_names(names):
     """
     Get a list of variables in the default graph by a list of names
@@ -73,7 +72,6 @@ def get_vars_by_names(names):
         opn, varn = get_op_var_name(n)
         ret.append(G.get_tensor_by_name(varn))
     return ret
-
 
 
 def get_elems_by_keys(elements, names):
@@ -104,14 +102,17 @@ def backup_collection(keys):
         ret[k] = copy(tf.get_collection(k))
     return ret
 
+
 def restore_collection(backup):
     for k, v in six.iteritems(backup):
         del tf.get_collection_ref(k)[:]
         tf.get_collection_ref(k).extend(v)
 
+
 def clear_collection(keys):
     for k in keys:
         del tf.get_collection_ref(k)[:]
+
 
 @contextmanager
 def freeze_collection(keys):

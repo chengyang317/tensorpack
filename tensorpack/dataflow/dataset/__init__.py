@@ -8,4 +8,4 @@ from tensorpack.dataflow.dataset.ilsvrc import *
 from tensorpack.dataflow.dataset.mnist import *
 from tensorpack.dataflow.dataset.svhn import *
 from tensorpack.dataflow.dataset.visualqa import *
-
+from tensorpack.dataflow.dataset.voc12 import *

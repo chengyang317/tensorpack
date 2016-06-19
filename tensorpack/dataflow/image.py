@@ -11,6 +11,7 @@ from .imgaug import AugmentorList
 
 __all__ = ['ImageFromFile', 'AugmentImageComponent', 'AugmentImagesTogether']
 
+
 class ImageFromFile(DataFlow):
     """ Generate rgb images from list of files """
     def __init__(self, files, channel=3, resize=None):

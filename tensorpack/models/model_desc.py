@@ -14,6 +14,7 @@ __all__ = ['ModelDesc', 'InputVar']
 
 InputVar = namedtuple('InputVar', ['type', 'shape', 'name'])
 
+
 class ModelDesc(object):
     """ Base class for a model description """
     __metaclass__ = ABCMeta
@@ -68,20 +69,20 @@ class ModelDesc(object):
     def _old_version(self):
         # for backward-compat only.
         import inspect
-        args = inspect.getargspec(self._get_cost)
+        args = inspect.getargspec(self._get_loss)
         return len(args.args) == 3
 
-    def get_cost(self):
+    def get_loss(self):
         if self._old_version():
             assert type(self.is_training) == bool
             logger.warn("!!!using _get_cost to setup the graph is deprecated in favor of _build_graph")
             logger.warn("See examples for details.")
-            return self._get_cost(self.model_inputs, self.is_training)
+            return self._get_loss(self.model_inputs, self.is_training)
         else:
-            return self._get_cost()
+            return self._get_loss()
 
-    def _get_cost(self, *args):
-        return self.cost
+    def _get_loss(self, *args):
+        return self.loss
 
     def get_gradient_processor(self):
         """ Return a list of GradientProcessor. They will be executed in order"""

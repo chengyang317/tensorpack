@@ -2,17 +2,16 @@
 # File: common.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import tensorflow as tf
 from collections import namedtuple
+
 from six.moves import zip
 
 from ..tfutils import *
 
-import multiprocessing
-
 __all__ = ['PredictConfig', 'get_predict_func', 'PredictResult' ]
 
 PredictResult = namedtuple('PredictResult', ['input', 'output'])
+
 
 class PredictConfig(object):
     def __init__(self, **kwargs):
@@ -58,6 +57,7 @@ class PredictConfig(object):
         self.output_var_names = kwargs.pop('output_var_names')
         self.return_input = kwargs.pop('return_input', False)
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
+
 
 def get_predict_func(config):
     """

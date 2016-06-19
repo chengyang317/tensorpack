@@ -3,20 +3,15 @@
 # File: concurrency.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
-import multiprocessing, threading
-import tensorflow as tf
-import time
+import multiprocessing
+import threading
+
 import six
-from six.moves import queue, range, zip
-
-
-from ..utils.concurrency import DIE
-from ..tfutils.modelutils import describe_model
-from ..utils import logger
-from ..utils.timer import *
-from ..tfutils import *
+from six.moves import queue, range
 
 from .common import *
+from ..tfutils import *
+from ..utils.concurrency import DIE
 
 try:
     if six.PY2:
@@ -24,11 +19,12 @@ try:
     else:
         from concurrent.futures import Future
 except ImportError:
-    logger.warn("Cannot import Future in either tornado.concurrent or py3 standard lib. MultiThreadAsyncPredictor won't be available.")
+    logger.warn("Cannot import Future in either tornado.concurrent or py3 standard lib. "
+                "MultiThreadAsyncPredictor won't be available.")
     __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker']
 else:
-    __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker',
-                'MultiThreadAsyncPredictor']
+    __all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker', 'MultiThreadAsyncPredictor']
+
 
 class MultiProcessPredictWorker(multiprocessing.Process):
     """ Base class for predict worker that runs offline in multiprocess"""
@@ -59,6 +55,7 @@ class MultiProcessPredictWorker(multiprocessing.Process):
             if self.idx == 0:
                 describe_model()
 
+
 class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
     """ An offline predictor worker that takes input and produces output by queue"""
     def __init__(self, idx, gpuid, inqueue, outqueue, config):
@@ -79,6 +76,7 @@ class MultiProcessQueuePredictWorker(MultiProcessPredictWorker):
                 return
             else:
                 self.outqueue.put((tid, self.func(dp)))
+
 
 class PredictorWorkerThread(threading.Thread):
     def __init__(self, queue, pred_func, id, nr_input_var, batch_size=5):
@@ -125,6 +123,7 @@ class PredictorWorkerThread(threading.Thread):
 
             for idx, f in enumerate(futures):
                 f.set_result([k[idx] for k in outputs])
+
 
 class MultiThreadAsyncPredictor(object):
     """

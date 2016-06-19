@@ -5,6 +5,7 @@
 
 import tensorflow as tf
 from tensorpack.tfutils.filler import *
+from tensorpack.models import layer
 
 from ._common import layer_register
 from ..tfutils.symbolic_functions import *
@@ -12,10 +13,8 @@ from ..tfutils.symbolic_functions import *
 __all__ = ['FullyConnected']
 
 
-@layer_register()
-def FullyConnected(x, out_dim,
-                   w_init_config=None, b_init_config=None,
-                   nl=tf.nn.relu, use_bias=True):
+@layer.register()
+def FullyConnected(x, out_dim, w_init_config=None, b_init_config=None, nl=tf.nn.relu, use_bias=True):
     """
     Fully-Connected layer.
 

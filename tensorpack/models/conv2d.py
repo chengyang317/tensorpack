@@ -4,13 +4,13 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 from ._common import *
 from tensorpack.tfutils.filler import *
+from tensorpack.models import layer
 
 __all__ = ['Conv2D']
 
-@layer_register()
-def Conv2D(x, out_channel, kernel_shape,
-           padding='SAME', stride=1,
-           w_init_config=None, b_init_config=None,
+
+@layer.register()
+def Conv2D(x, out_channel, kernel_shape, padding='SAME', stride=1, w_init_config=None, b_init_config=None,
            nl=tf.nn.relu, split=1, use_bias=True):
     """
     2D convolution on 4D inputs.

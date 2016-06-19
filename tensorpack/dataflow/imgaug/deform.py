@@ -10,6 +10,7 @@ __all__ = ['GaussianDeform', 'GaussianMap']
 
 # TODO really needs speedup
 
+
 class GaussianMap(object):
     """ Generate gaussian weighted deformation map"""
     def __init__(self, image_shape, sigma=0.5):
@@ -27,6 +28,7 @@ class GaussianMap(object):
         #cv2.imshow(" ", g)
         #cv2.waitKey()
         return g
+
 
 def np_sample(img, coords):
     # a numpy implementation of ImageSample layer
@@ -51,6 +53,7 @@ def np_sample(img, coords):
             img[lcoory, ucoorx,:] * ndiffy * diffx + \
             img[ucoory,lcoorx,:] * diffy * ndiffx
     return ret[:,:,0,:]
+
 
 # TODO input/output with different shape
 class GaussianDeform(ImageAugmentor):
