@@ -22,6 +22,7 @@ Preprocessing like this:
     for i in *.tar; do dir=${i%.tar}; echo $dir; mkdir -p $dir; tar xf $i -C $dir; done
 """
 
+
 class ILSVRCMeta(object):
     """
     Provide metadata for ILSVRC dataset.
@@ -84,6 +85,7 @@ class ILSVRCMeta(object):
         if size is not None:
             arr = cv2.resize(arr, size[::-1])
         return arr
+
 
 class ILSVRC12(DataFlow):
     def __init__(self, dir, name, meta_dir=None, shuffle=True):

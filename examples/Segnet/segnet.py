@@ -8,15 +8,18 @@ BATCH_SIZE = 4
 
 
 class Model(tp.ModelDesc):
+    def __init__(self):
+        super(Model, self).__init__()
+
     def _get_input_vars(self):
         return [tp.InputVar(tf.float32, (None,), 'input'), tp.InputVar(tf.int32, (None,), 'label')]
 
     def _build_graph(self, inputs, is_training):
         is_training = bool(is_training)
-        image, label = inputs
+        images, labels = inputs
         with tp.argscope(tp.Conv2D, kernel_shape=3, w_init_config=tp.FillerConfig(type='msra'),
                          nl=tp.BNReLU(is_training)):
-            l = tp.Conv2D('conv1_1', image, 64)
+            l = tp.Conv2D('conv1_1', images, 64)
             l = tp.Conv2D('conv1_2', l, 64)
             l, pool1_mask = tp.MaxPoolingWithArgmax('pool1', l, 2)
             l = tp.Conv2D('conv2_1', l, 128)
@@ -52,82 +55,53 @@ class Model(tp.ModelDesc):
             l = tp.Conv2D('conv2_1_D', l, 64)
             l = tp.ArgmaxUnPooling('upsample1', x=l, argmax=pool1_mask, shape=2, stride=2)
             l = tp.Conv2D('conv1_2_D', l, 64)
-            logits = tp.Conv2D('conv1_1_D', l, 11)
+            logits = tp.Conv2D('conv1_1_D', l, 21)
 
-            pos_weight = [0.2595, 0.1826, 4.5640, 0.1417, 0.9051, 0.3826, 9.6446, 1.8418, 0.6823, 6.2478, 7.3614]
-            cost = tf.nn.weighted_cross_entropy_with_logits(logits=logits, targets=label, pos_weight=pos_weight)
-            cost = tf.reduce_mean(cost, name='cross_entropy_loss')
-            tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, cost)
+            loss = tp.segm_loss('segm_loss', logits, labels)
+            tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, loss)
 
-            # compute the number of failed samples, for ClassificationError to use at test time
-            wrong = tp.prediction_incorrect(logits, label)
-            nr_wrong = tf.reduce_sum(wrong, name='wrong')
-            # monitor training error
-            tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
+            accuracy = tp.segm_pixel_accuracy('segm_accuracy', logits, labels)
+            tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, accuracy)
 
-            # weight decay on all W of fc layers
-            wd_cost = tf.mul(0.0005, tp.regularize_cost('conv.*/W', tf.nn.l2_loss), name='regularize_loss')
-            tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, wd_cost)
+            wd_loss = tp.regularize_loss('regularize_loss', 0.0005, 'conv.*/W', tf.nn.l2_loss)
+            tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, wd_loss)
 
             tp.add_param_summary([('.*/W', ['histogram'])])  # monitor W
-            self.cost = tf.add_n([cost, wd_cost], name='cost')
+            self.loss = tf.add_n([loss, wd_loss], name='loss')
 
 
-def get_data(train_or_test, cifar_classnum):
-    isTrain = train_or_test == 'train'
-    if cifar_classnum == 10:
-        ds = dataset.Cifar10(train_or_test)
-    else:
-        ds = dataset.Cifar100(train_or_test)
-    if isTrain:
+def get_data(train_or_test):
+    is_train = train_or_test == 'train'
+    ds = tp.dataset.VOC12Seg(dataset_type=train_or_test, shuffle=True)
+    if is_train:
         augmentors = [
-            imgaug.RandomCrop((30, 30)),
-            imgaug.Flip(horiz=True),
-            imgaug.Brightness(63),
-            imgaug.Contrast((0.2,1.8)),
-            imgaug.GaussianDeform(
-                [(0.2, 0.2), (0.2, 0.8), (0.8,0.8), (0.8,0.2)],
-                (30,30), 0.2, 3),
-            imgaug.MeanVarianceNormalize(all_channel=True)
+            tp.imgaug.Padding(target_shape=500)
         ]
-    else:
-        augmentors = [
-            imgaug.CenterCrop((30, 30)),
-            imgaug.MeanVarianceNormalize(all_channel=True)
-        ]
-    ds = AugmentImageComponent(ds, augmentors)
-    ds = BatchData(ds, 128, remainder=not isTrain)
-    if isTrain:
-        ds = PrefetchDataZMQ(ds, 5)
+        ds = tp.AugmentImagesTogether(ds, augmentors)
+    ds = tp.BatchData(ds, 10, remainder=not is_train)
+    if is_train:
+        ds = tp.PrefetchDataZMQ(ds, 5)
     return ds
 
+
 def get_config(cifar_classnum):
-    # prepare dataset
-    dataset_train = get_data('train', cifar_classnum)
-    # step_per_epoch = dataset_train.size()
-    step_per_epoch = 5
-    dataset_test = get_data('test', cifar_classnum)
-
-    sess_config = get_default_sess_config(0.5)
-
-    nr_gpu = get_nr_gpu()
-    lr = tf.train.exponential_decay(
-        learning_rate=1e-2,
-        global_step=get_global_step_var(),
-        decay_steps=step_per_epoch * (30 if nr_gpu == 1 else 20),
-        decay_rate=0.5, staircase=True, name='learning_rate')
+    dataset_train = get_data('train')
+    step_per_epoch = dataset_train.size()
+    # step_per_epoch = 5
+    dataset_test = get_data('valid')
+    sess_config = tp.get_default_sess_config()
+    nr_gpu = tp.get_nr_gpu()
+    lr = tf.train.exponential_decay(learning_rate=1e-2, global_step=tp.get_global_step_var(),
+                                    decay_steps=step_per_epoch * (30 if nr_gpu == 1 else 20),
+                                    decay_rate=0.5, staircase=True, name='learning_rate')
     tf.scalar_summary('learning_rate', lr)
-
-    return TrainConfig(
+    return tp.TrainConfig(
         dataset=dataset_train,
         optimizer=tf.train.AdamOptimizer(lr, epsilon=1e-3),
-        callbacks=Callbacks([
-            StatPrinter(),
-            ModelSaver(),
-            InferenceRunner(dataset_test, ClassificationError())
-        ]),
+        callbacks=tp.Callbacks([tp.StatPrinter(), tp.ModelSaver(),
+                                tp.InferenceRunner(dataset_test, tp.ClassificationError())]),
         session_config=sess_config,
-        model=Model(cifar_classnum),
+        model=Model(),
         step_per_epoch=step_per_epoch,
         max_epoch=250,
     )
