@@ -3,23 +3,15 @@
 # File: load-alexnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
-import cv2  # tf bug
-import tensorflow as tf
-import numpy as np
-import os
 import argparse
-import cPickle as pkl
+import os
 
-from tensorpack.train import TrainConfig
-from tensorpack.predict import PredictConfig, get_predict_func
-from tensorpack.models import *
-from tensorpack.utils import *
-from tensorpack.tfutils import *
-from tensorpack.tfutils.symbolic_functions import *
-from tensorpack.tfutils.summary import *
-from tensorpack.callbacks import *
-from tensorpack.dataflow import *
+import numpy as np
+
 from tensorpack.dataflow.dataset import ILSVRCMeta
+from tensorpack.models import *
+from tensorpack.predict import PredictConfig, get_predict_func
+from tensorpack.tfutils import *
 
 """
 Usage:
@@ -79,7 +71,7 @@ def run_test(path, input):
     predict_func = get_predict_func(pred_config)
 
     import cv2
-    im = cv2.imread(input)
+    im = cv2.imread(input)  # in bgr order
     assert im is not None
     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
     im = cv2.resize(im, (227, 227))
