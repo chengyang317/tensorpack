@@ -6,9 +6,9 @@
 from abc import ABCMeta, abstractmethod
 import tensorflow as tf
 from collections import namedtuple
-
-from ..utils import logger
-from ..tfutils import *
+import re
+from tensorpack.utils import logger
+from tensorpack.tfutils.common import get_tensor_by_name
 
 __all__ = ['ModelDesc', 'InputVar']
 
@@ -45,6 +45,48 @@ class ModelDesc(object):
     def _get_input_vars(self):
         """:returns: a list of InputVar """
 
+    def _get_tensor_from_build(self, name, tower=0):
+        """
+        Find matched tensor in the variables dict created in _build_graph process
+        :param name: maybe a full name of a variable or a regex
+        :param tower: gpu index
+        :return: matched tensor or error
+        """
+        variables_dict = self.build_graph_variables[tower]
+        tensor = variables_dict.get(name, None)
+        if tensor is None:
+            keys = variables_dict.keys
+            matched_keys = []
+            for key in keys:
+                if re.search(name, key):
+                    matched_keys.append(key)
+            assert len(matched_keys) <= 1, "{} matched multi variabls {}".format(name, ','.join(matched_keys))
+            if len(matched_keys) == 0:
+                return None
+            tensor = variables_dict[matched_keys[0]]
+        return tensor
+
+    def get_tensors_by_names(self, names, tower=0):
+        """
+        Find matched tensors by names. The match process is firstly to match variables created in _build_graph func.
+        And the to match target in the whole tensorflow graph.
+        :param names: name or a list of names. name maybe is in regex form or a specified name defined in the graph
+         form or in python locals vairable name form
+        :param tower: gpu index
+        :return: matched tensors which have the length as names' length
+        """
+        if not isinstance(names, (tuple, list)):
+            names = list(names)
+        tensors = []
+        for name in names:
+            tensor = self._get_tensor_from_build(name, tower)
+            if tensor is None:
+                name = 'tower{}/'.format(tower) + name
+                tensor = get_tensor_by_name(name)
+            assert tensor is None, "Can't match any tensor by {}".format(name)
+            tensors.append(tensor)
+        return tensors
+
     def build_graph(self, model_inputs, is_training):
         """
         setup the whole graph.
@@ -56,7 +98,10 @@ class ModelDesc(object):
         :param is_training: a boolean
         :returns: the cost to minimize. a scalar variable
         """
+        self.build_graph_variables = [] #used to store multi graph elemtents in multigpu case, index is gpu index
         self._build_graph(model_inputs, is_training)
+        assert not self.build_graph_variables, \
+            "During _build_graph func, there has not added local variables in to build_graph_variables"
 
     #@abstractmethod
     def _build_graph(self, inputs, is_training):

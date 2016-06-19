@@ -12,11 +12,14 @@ from ..utils import *
 
 __all__ = ['Callback', 'PeriodicCallback', 'TrainCallbackType', 'TestCallbackType']
 
+
 class TrainCallbackType(object):
     pass
 
+
 class TestCallbackType(object):
     pass
+
 
 class Callback(object):
     """ Base class for all callbacks """
@@ -91,6 +94,7 @@ class Callback(object):
     def __str__(self):
         return type(self).__name__
 
+
 class ProxyCallback(Callback):
     def __init__(self, cb):
         self.cb = cb
@@ -109,6 +113,7 @@ class ProxyCallback(Callback):
 
     def __str__(self):
         return str(self.cb)
+
 
 class PeriodicCallback(ProxyCallback):
     """

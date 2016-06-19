@@ -1,10 +1,10 @@
 # -*- coding: UTF-8 -*-
 # File: modelutils.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
-
 import tensorflow as tf
+from tensorpack.utils import logger
 
-from ..utils import logger
+__all__ = ['describe_model', 'get_shape_str', 'get_name_str']
 
 
 def describe_model():
@@ -37,3 +37,15 @@ def get_shape_str(tensors):
         shape_str = str(tensors.get_shape().as_list())
     return shape_str
 
+
+def get_name_str(graph_elements):
+    """
+    :param graph_elements: list of tensors, variables, ops
+    :return: a string to describe their name
+    """
+    if not isinstance(graph_elements, (list, tuple)):
+        graph_elements = list(graph_elements)
+    if not graph_elements:
+        return 'None'
+    name_strs = [elem.name for elem in graph_elements]
+    return ','.join(name_strs)

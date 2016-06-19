@@ -16,6 +16,7 @@ from .trainer import QueueInputTrainer
 
 __all__ = ['AsyncMultiGPUTrainer', 'SyncMultiGPUTrainer']
 
+
 class MultiGPUTrainer(QueueInputTrainer):
     """ Base class for multi-gpu training"""
     def __init__(self, config, input_queue=None, predict_tower=None):
@@ -61,6 +62,7 @@ class MultiGPUTrainer(QueueInputTrainer):
         restore_collection(backup)
         return grad_list
 
+
 class SyncMultiGPUTrainer(MultiGPUTrainer):
     def train(self):
         self.init_session_and_coord()
@@ -82,6 +84,7 @@ class SyncMultiGPUTrainer(MultiGPUTrainer):
         # [debug]: do nothing in training
         #self.train_op = self.dequed_inputs[0][0] + self.dequed_inputs[1][0]
         self.main_loop()
+
 
 class AsyncMultiGPUTrainer(MultiGPUTrainer):
     def train(self):

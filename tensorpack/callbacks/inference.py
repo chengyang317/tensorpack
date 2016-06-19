@@ -49,7 +49,7 @@ class Inferencer(object):
 
     def get_output_tensors(self):
         """
-        Return a list of tensor names needed for this inference
+        Return a list of tensor needed for this inference
         """
         return self._get_output_vars()
 
@@ -88,6 +88,7 @@ class InferenceRunner(Callback):
 
     def _find_output_tensors(self):
         self.output_tensors = []    # list of names
+
         self.vc_to_vars = []    # list of list of (var_name: output_idx)
         for vc in self.vcs:
             vc_vars = vc._get_output_tensors()
@@ -167,16 +168,16 @@ class ClassificationError(Inferencer):
     testing (because the size of test set might not be a multiple of batch size).
     Therefore the result is different from averaging the error rate of each batch.
     """
-    def __init__(self, wrong_var_name='wrong:0', summary_name='validation_error'):
+    def __init__(self, wrong_var, summary_name='validation_error'):
         """
-        :param wrong_var_name: name of the `wrong` variable
+        :param wrong_var: the `wrong` variable
         :param summary_name: the name for logging
         """
-        self.wrong_var_name = wrong_var_name
+        self.wrong_var = wrong_var
         self.summary_name = summary_name
 
     def _get_output_tensors(self):
-        return [self.wrong_var_name]
+        return [self.wrong_var]
 
     def _before_inference(self):
         self.err_stat = Accuracy()

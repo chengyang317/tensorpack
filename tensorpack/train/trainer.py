@@ -16,6 +16,7 @@ from ..tfutils import *
 
 __all__ = ['SimpleTrainer', 'QueueInputTrainer']
 
+
 class SimpleTrainer(Trainer):
     def run_step(self):
         data = next(self.data_producer)
@@ -95,6 +96,7 @@ class EnqueueThread(threading.Thread):
             finally:
                 logger.info("Enqueue Thread Exited.")
 
+
 class QueueInputTrainer(Trainer):
     """ Single GPU Trainer, takes input from a queue"""
 
@@ -118,7 +120,7 @@ class QueueInputTrainer(Trainer):
         if predict_tower is None:
             # by default, use the first training gpu for prediction
             predict_tower = [0]
-        self.predict_tower = predict_tower
+        self.predict_tower = list(predict_tower)
         self.dequed_inputs = None
 
     def _get_model_inputs(self):
@@ -187,13 +189,16 @@ class QueueInputTrainer(Trainer):
 
     def get_predict_func(self, input_names, output_names, tower=0):
         """
+        Get a predict func which can be used to eval predictions
+        :param input_names: var names which maybe is a fullname or regex
+        :param output_names: var names which maybe is a fullname or regex
         :param tower: return the kth predict_func
         :returns: a predictor function
         """
-        tower = self.predict_tower[tower % len(self.predict_tower)]
-        raw_input_vars = get_vars_by_names(input_names)
-        output_names = ['towerp{}/'.format(tower) + n for n in output_names]
-        output_vars = get_vars_by_names(output_names)
+        assert tower in self.predict_tower
+        raw_input_vars = self.model.get_tensors_by_names(input_names)
+        output_vars = self.model.get_tensors_by_names(output_names, tower)
+
         def func(inputs):
             assert len(inputs) == len(raw_input_vars)
             feed = dict(zip(raw_input_vars, inputs))

@@ -87,3 +87,6 @@ def shape4d(a):
     # for use with tensorflow
     return [1] + shape2d(a) + [1]
 
+
+
+

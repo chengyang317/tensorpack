@@ -56,6 +56,7 @@ class Model(tp.ModelDesc):
 
         tp.add_param_summary([('.*/W', ['histogram'])])   # monitor W
         self.loss = tp.sum_loss('sum_loss', [classfication_loss, wd_loss])
+        self.graph_elements_list.append(locals())
 
 def get_data(train_or_test, cifar_classnum):
     isTrain = train_or_test == 'train'
