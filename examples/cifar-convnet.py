@@ -45,16 +45,17 @@ class Model(tp.ModelDesc):
             l = tp.Conv2D('conv3.1', l, out_channel=128, padding='VALID')
             l = tp.Conv2D('conv3.2', l, out_channel=128, padding='VALID')
         l = tp.FullyConnected('fc0', l, 1024 + 512, b_init_config=tp.FillerConfig(type='constant', value=0.1))
-        l = tp.dropout(l, keep_prob)
+        l = tp.dropout('fc0_dropout', l, keep_prob)
         l = tp.FullyConnected('fc1', l, 512, b_init_config=tp.FillerConfig(type='constant', value=0.1))
         logits = tp.FullyConnected('linear', l, out_dim=self.cifar_classnum, nl=tf.identity)
 
-        classfication_loss = tp.classification_loss(logits, label, keys=tp.MOVING_SUMMARY_VARS_KEY)
-        nr_wrong = tp.classification_accuracy(logits, labels, keys=tp.MOVING_SUMMARY_VARS_KEY)
-        wd_loss = tp.regularize_loss('fc.*/W', 0.004, keys=tp.MOVING_SUMMARY_VARS_KEY)
+        classfication_loss = tp.classification_loss('classfication_loss', logits, labels,
+                                                    keys=tp.MOVING_SUMMARY_VARS_KEY)
+        nr_wrong = tp.classification_accuracy('nr_wrong', logits, labels, keys=tp.MOVING_SUMMARY_VARS_KEY)
+        wd_loss = tp.regularize_loss('wd_loss', 'fc.*/W', 0.004, keys=tp.MOVING_SUMMARY_VARS_KEY)
 
         tp.add_param_summary([('.*/W', ['histogram'])])   # monitor W
-        self.loss = tp.sum_loss([classfication_loss, wd_loss])
+        self.loss = tp.sum_loss('sum_loss', [classfication_loss, wd_loss])
 
 def get_data(train_or_test, cifar_classnum):
     isTrain = train_or_test == 'train'

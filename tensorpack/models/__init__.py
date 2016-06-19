@@ -14,3 +14,4 @@ from tensorpack.models.spatial_transformer import *
 from tensorpack.models.loss import *
 from tensorpack.models.accuracy import *
 from tensorpack.models.utils import *
+from tensorpack.models.common import *

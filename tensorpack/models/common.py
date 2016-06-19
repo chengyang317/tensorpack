@@ -5,6 +5,8 @@
 import tensorflow as tf
 from tensorpack.models.utils import layer
 
+__all__ = ['dropout']
+
 
 @layer.register()
 def dropout(x, prob):

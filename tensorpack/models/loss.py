@@ -62,7 +62,7 @@ def _log_regularizer(name):
     logger.info("Apply regularizer for {}".format(name))
 
 
-@layer.register()
+@layer.register(log_shape=False)
 def regularize_loss(regex, weight_delay=0.004, loss_func=tf.nn.l2_loss, keys=None):
     """
         Apply a regularizer on every trainable variable matching the regex.

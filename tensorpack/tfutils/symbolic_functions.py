@@ -57,7 +57,7 @@ def batch_flatten(x):
     if not isinstance(shape[0], tf.Tensor):
         return tf.reshape(x, [shape[0], -1])
     if tf.Tensor not in [type(item) for item in shape[1:]]:
-        return tf.reshape(x, np.prod(shape[1:]))
+        return tf.reshape(x, [-1, np.prod(shape[1:])])
     return tf.reshape(x, [shape[0], -1])
 
 
