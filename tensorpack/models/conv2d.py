@@ -4,7 +4,7 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 from ._common import *
 from tensorpack.tfutils.filler import *
-from tensorpack.models import layer
+from tensorpack.models.utils import layer
 
 __all__ = ['Conv2D']
 

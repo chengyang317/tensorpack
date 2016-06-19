@@ -26,14 +26,14 @@ class Model(tp.ModelDesc):
                ]
 
     def _build_graph(self, input_vars, is_training):
-        image, label = input_vars
+        image, labels = input_vars
         keep_prob = tf.constant(0.5 if is_training else 1.0)
 
         if is_training:
             tf.image_summary("train_image", image, 10)
 
         image = image / 4.0     # just to make range smaller
-        with tp.argscope(tp.Conv2D, nl=tp.BNReLU(is_training), use_bias=False, kernel_shape=3):
+        with tp.argscope.scope(tp.Conv2D, nl=tp.BNReLU(is_training), use_bias=False, kernel_shape=3):
             l = tp.Conv2D('conv1.1', image, out_channel=64)
             l = tp.Conv2D('conv1.2', l, out_channel=64)
             l = tp.MaxPooling('pool1', l, 3, stride=2, padding='SAME')
@@ -45,28 +45,16 @@ class Model(tp.ModelDesc):
             l = tp.Conv2D('conv3.1', l, out_channel=128, padding='VALID')
             l = tp.Conv2D('conv3.2', l, out_channel=128, padding='VALID')
         l = tp.FullyConnected('fc0', l, 1024 + 512, b_init_config=tp.FillerConfig(type='constant', value=0.1))
-        l = tf.nn.dropout(l, keep_prob)
+        l = tp.dropout(l, keep_prob)
         l = tp.FullyConnected('fc1', l, 512, b_init_config=tp.FillerConfig(type='constant', value=0.1))
         logits = tp.FullyConnected('linear', l, out_dim=self.cifar_classnum, nl=tf.identity)
 
-        cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
-        cost = tf.reduce_mean(cost, name='cross_entropy_loss')
-        tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, cost)
-
-        # compute the number of failed samples, for ClassificationError to use at test time
-        wrong = tp.prediction_incorrect(logits, label)
-        nr_wrong = tf.reduce_sum(wrong, name='wrong')
-        # monitor training error
-        tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, tf.reduce_mean(wrong, name='train_error'))
-
-        # weight decay on all W of fc layers
-        wd_cost = tf.mul(0.004,
-                         tp.regularize_cost('fc.*/W', tf.nn.l2_loss),
-                         name='regularize_loss')
-        tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, wd_cost)
+        classfication_loss = tp.classification_loss(logits, label, keys=tp.MOVING_SUMMARY_VARS_KEY)
+        nr_wrong = tp.classification_accuracy(logits, labels, keys=tp.MOVING_SUMMARY_VARS_KEY)
+        wd_loss = tp.regularize_loss('fc.*/W', 0.004, keys=tp.MOVING_SUMMARY_VARS_KEY)
 
         tp.add_param_summary([('.*/W', ['histogram'])])   # monitor W
-        self.cost = tf.add_n([cost, wd_cost], name='cost')
+        self.loss = tp.sum_loss([classfication_loss, wd_loss])
 
 def get_data(train_or_test, cifar_classnum):
     isTrain = train_or_test == 'train'

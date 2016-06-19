@@ -57,17 +57,12 @@ class Model(tp.ModelDesc):
             l = tp.Conv2D('conv1_2_D', l, 64)
             logits = tp.Conv2D('conv1_1_D', l, 21)
 
-            loss = tp.segm_loss('segm_loss', logits, labels)
-            tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, loss)
-
-            accuracy = tp.segm_pixel_accuracy('segm_accuracy', logits, labels)
-            tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, accuracy)
-
-            wd_loss = tp.regularize_loss('regularize_loss', 0.0005, 'conv.*/W', tf.nn.l2_loss)
-            tf.add_to_collection(tp.MOVING_SUMMARY_VARS_KEY, wd_loss)
+            segm_loss = tp.segm_loss('segm_loss', logits, labels, keys=tp.MOVING_SUMMARY_VARS_KEY)
+            accuracy = tp.segm_pixel_accuracy('segm_accuracy', logits, labels, keys=tp.MOVING_SUMMARY_VARS_KEY)
+            wd_loss = tp.regularize_loss('regularize_loss', 0.0005, 'conv.*/W', keys=tp.MOVING_SUMMARY_VARS_KEY)
 
             tp.add_param_summary([('.*/W', ['histogram'])])  # monitor W
-            self.loss = tf.add_n([loss, wd_loss], name='loss')
+            self.loss = tp.sum_loss([segm_loss, wd_loss])
 
 
 def get_data(train_or_test):

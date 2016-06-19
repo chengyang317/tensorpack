@@ -12,6 +12,7 @@ from . import get_global_step_var
 __all__ = ['create_summary', 'add_param_summary', 'add_activation_summary',
            'summary_moving_average']
 
+
 def create_summary(name, v):
     """
     Return a tf.Summary object with name and simple scalar value v
@@ -21,6 +22,7 @@ def create_summary(name, v):
     s = tf.Summary()
     s.value.add(tag=name, simple_value=v)
     return s
+
 
 def add_activation_summary(x, name=None):
     """
@@ -37,6 +39,7 @@ def add_activation_summary(x, name=None):
     tf.scalar_summary(
             name + '/activation_rms',
             tf.sqrt(tf.reduce_mean(tf.square(x))))
+
 
 def add_param_summary(summary_lists):
     """
@@ -78,6 +81,7 @@ def add_param_summary(summary_lists):
             if re.match(rgx, name):
                 for act in actions:
                     perform(p, act)
+
 
 def summary_moving_average():
     """ Create a MovingAverage op and summary for all variables in

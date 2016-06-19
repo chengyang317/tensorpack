@@ -5,10 +5,8 @@
 
 import tensorflow as tf
 from tensorpack.tfutils.filler import *
-from tensorpack.models import layer
-
-from ._common import layer_register
-from ..tfutils.symbolic_functions import *
+from tensorpack.models.utils import layer
+from tensorpack.tfutils.symbolic_functions import *
 
 __all__ = ['FullyConnected']
 

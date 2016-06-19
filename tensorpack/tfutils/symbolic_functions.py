@@ -9,7 +9,7 @@ from ..utils import logger
 
 __all__ = ['prediction_incorrect', 'one_hot', 'flatten', 'batch_flatten', 'logSoftmax', 'channel_flatten', 'cast_type',
            'class_balanced_binary_class_cross_entropy', 'print_stat', 'rms', 'get_shape', 'get_size', 'BOOLEN_TYPES',
-           'NUMERIC_TYPES', 'mean_vector']
+           'NUMERIC_TYPES', 'mean_vector', 'reshape_like', 'cast_like', 'prediction_correct', 'cast_list']
 
 BOOLEN_TYPES = [tf.bool]
 NUMERIC_TYPES = [tf.float32, tf.float16, tf.float16, tf.int32, tf.int64, tf.int8, tf.int16, tf.uint8, tf.uint16]
@@ -33,6 +33,15 @@ def prediction_incorrect(logits, label, topk=1):
     return tf.cast(tf.logical_not(tf.nn.in_top_k(logits, label, topk)), tf.float32)
 
 
+def prediction_correct(logits, label, topk=1):
+    """
+    :param logits: NxC
+    :param label: N
+    :returns: a float32 vector of length N with 0/1 values, 1 meaning correct prediction
+    """
+    return tf.cast(tf.nn.in_top_k(logits, label, topk), tf.float32)
+
+
 def flatten(x):
     """
     Flatten the tensor.
@@ -44,24 +53,26 @@ def batch_flatten(x):
     """
     Flatten the tensor except the first dimension.
     """
-    shape = x.get_shape().as_list()[1:]
-    if None not in shape:
-        return tf.reshape(x, [-1, np.prod(shape)])
-    return tf.reshape(x, tf.pack([tf.shape(x)[0], -1]))
+    shape = get_shape(x)
+    if not isinstance(shape[0], tf.Tensor):
+        return tf.reshape(x, [shape[0], -1])
+    if tf.Tensor not in [type(item) for item in shape[1:]]:
+        return tf.reshape(x, np.prod(shape[1:]))
+    return tf.reshape(x, [shape[0], -1])
 
 
 def channel_flatten(x):
     """
-
+    Flatten the tensor except the last dimension.
     :param x:
     :return:
     """
-    shape = x.get_shape().as_list()
-    assert len(shape) == 4
-    if shape[-1] is not None:
+    shape = get_shape(x)
+    if not isinstance(shape[-1], tf.Tensor):
         return tf.reshape(x, [-1, shape[-1]])
-    return tf.reshape(x, tf.pack([-1, tf.shape(x)[3]]))
-
+    if tf.Tensor not in [type(item) for item in shape[:-1]]:
+        return tf.reshape(x, [np.prod(shape[:-1]), -1])
+    return tf.reshape(x, [-1, shape[-1]])
 
 
 def logSoftmax(x):
@@ -172,3 +183,18 @@ def mean_vector(x):
     mask = tf.logical_or(nan_mask, inf_mask)
     x = tf.boolean_mask(x, mask=mask)
     return tf.reduce_mean(x)
+
+
+def reshape_like(x, y):
+    y_shape = get_shape(y)
+    return tf.reshape(x, y_shape)
+
+
+def cast_like(x, y):
+    return cast_type(x, y.dtype)
+
+
+def cast_list(x):
+    if isinstance(x, (tuple, list)):
+        return list(x)
+    return [x]
