@@ -36,7 +36,7 @@ class Padding(ImageAugmentor):
     """
     Pad a image
     """
-    def __init__(self, target_shape, pad_value):
+    def __init__(self, target_shape, pad_value=0):
         """
 
         :param targe_shape:

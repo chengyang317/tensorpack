@@ -1,7 +1,6 @@
 import argparse
-
+import os
 import tensorflow as tf
-
 import tensorpack as tp
 
 BATCH_SIZE = 4
@@ -58,11 +57,12 @@ class Model(tp.ModelDesc):
             logits = tp.Conv2D('conv1_1_D', l, 21)
 
             segm_loss = tp.segm_loss('segm_loss', logits, labels, keys=tp.MOVING_SUMMARY_VARS_KEY)
-            accuracy = tp.segm_pixel_accuracy('segm_accuracy', logits, labels, keys=tp.MOVING_SUMMARY_VARS_KEY)
+            segm_accuracy = tp.segm_pixel_accuracy('segm_accuracy', logits, labels, keys=tp.MOVING_SUMMARY_VARS_KEY)
             wd_loss = tp.regularize_loss('regularize_loss', 0.0005, 'conv.*/W', keys=tp.MOVING_SUMMARY_VARS_KEY)
 
             tp.add_param_summary([('.*/W', ['histogram'])])  # monitor W
-            self.loss = tp.sum_loss([segm_loss, wd_loss])
+            self.loss = tp.sum_loss('sum_loss', [segm_loss, wd_loss])
+            return locals()
 
 
 def get_data(train_or_test):
@@ -79,7 +79,7 @@ def get_data(train_or_test):
     return ds
 
 
-def get_config(cifar_classnum):
+def get_config():
     dataset_train = get_data('train')
     step_per_epoch = dataset_train.size()
     # step_per_epoch = 5
@@ -106,12 +106,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.') # nargs='*' in multi mode
     parser.add_argument('--load', help='load model')
-    parser.add_argument('--classnum', help='10 for cifar10 or 100 for cifar100',
-                        type=int, default=10)
     args = parser.parse_args()
 
     basename = os.path.basename(__file__)
-    logger.set_logger_dir(
+    tp.logger.set_logger_dir(
         os.path.join('train_log', basename[:basename.rfind('.')]), 'k')
 
     if args.gpu:
@@ -120,9 +118,9 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
     with tf.Graph().as_default():
-        config = get_config(args.classnum)
+        config = get_config()
         if args.load:
-            config.session_init = SaverRestore(args.load)
+            config.session_init = tp.SaverRestore(args.load)
         if args.gpu:
             config.nr_tower = len(args.gpu.split(','))
-        QueueInputTrainer(config).train()
+        tp.QueueInputTrainer(config).train()
