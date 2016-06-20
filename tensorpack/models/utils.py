@@ -5,10 +5,11 @@
 from functools import wraps
 import six
 import copy
-from tensorpack.tfutils.argscope import argscope
-from tensorpack.tfutils.modelutils import *
-from tensorpack.tfutils.summary import add_activation_summary
 import tensorflow as tf
+from tensorpack.tfutils.argscope import argscope
+from tensorpack.tfutils.modelutils import get_shape_str
+from tensorpack.tfutils.summary import add_activation_summary
+from tensorpack.utils import logger
 
 __all__ = ['layer', 'shape2d', 'shape4d']
 

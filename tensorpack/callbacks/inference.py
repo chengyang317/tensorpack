@@ -1,17 +1,15 @@
 # -*- coding: UTF-8 -*-
 # File: inference.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
-
 from abc import ABCMeta, abstractmethod
-
 import numpy as np
 from six.moves import zip
 from tqdm import tqdm
-
-from .base import Callback
-from ..dataflow import DataFlow
-from ..tfutils import *
-from ..utils.stat import *
+import tensorflow as tf
+from tensorpack.callbacks.base import Callback
+from tensorpack.dataflow import DataFlow
+from tensorpack.tfutils import *
+from tensorpack.utils.stat import *
 
 __all__ = ['InferenceRunner', 'ClassificationError', 'ScalarStats', 'Inferencer', 'BinaryClassificationStats']
 
@@ -168,16 +166,16 @@ class ClassificationError(Inferencer):
     testing (because the size of test set might not be a multiple of batch size).
     Therefore the result is different from averaging the error rate of each batch.
     """
-    def __init__(self, wrong_var, summary_name='validation_error'):
+    def __init__(self, output_name, summary_name='validation_error'):
         """
-        :param wrong_var: the `wrong` variable
+        :param output_name: the `wrong` variable
         :param summary_name: the name for logging
         """
-        self.wrong_var = wrong_var
+        self.output_name = output_name
         self.summary_name = summary_name
 
     def _get_output_tensors(self):
-        return [self.wrong_var]
+        return [self.output_name]
 
     def _before_inference(self):
         self.err_stat = Accuracy()

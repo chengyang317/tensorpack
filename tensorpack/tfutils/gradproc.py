@@ -11,6 +11,7 @@ from ..utils import logger, MOVING_SUMMARY_VARS_KEY
 __all__ = ['GradientProcessor', 'SummaryGradient', 'CheckGradient',
            'ScaleGradient', 'MapGradient']
 
+
 class GradientProcessor(object):
     __metaclass__ = ABCMeta
 
@@ -29,6 +30,7 @@ class GradientProcessor(object):
 
 
 _summaried_gradient = set()
+
 
 class SummaryGradient(GradientProcessor):
     """
@@ -57,6 +59,7 @@ class CheckGradient(GradientProcessor):
             tf.Assert(tf.reduce_all(tf.is_finite(var)), [var])
         return grads
 
+
 class ScaleGradient(GradientProcessor):
     """
     Scale gradient by a multiplier
@@ -84,6 +87,7 @@ class ScaleGradient(GradientProcessor):
             else:
                 ret.append((grad, var))
         return ret
+
 
 class MapGradient(GradientProcessor):
     """

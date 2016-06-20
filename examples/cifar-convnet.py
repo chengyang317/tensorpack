@@ -56,7 +56,7 @@ class Model(tp.ModelDesc):
 
         tp.add_param_summary([('.*/W', ['histogram'])])   # monitor W
         self.loss = tp.sum_loss('sum_loss', [classfication_loss, wd_loss])
-        self.graph_elements_list.append(locals())
+        return locals()
 
 def get_data(train_or_test, cifar_classnum):
     isTrain = train_or_test == 'train'
@@ -109,7 +109,7 @@ def get_config(cifar_classnum):
         callbacks=tp.Callbacks([
             tp.StatPrinter(),
             tp.ModelSaver(),
-            tp.InferenceRunner(dataset_test, tp.ClassificationError())
+            tp.InferenceRunner(dataset_test, tp.ClassificationError(output_name='nr_wrong'))
         ]),
         session_config=sess_config,
         model=Model(cifar_classnum),

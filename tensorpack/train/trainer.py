@@ -197,7 +197,8 @@ class QueueInputTrainer(Trainer):
         """
         assert tower in self.predict_tower
         raw_input_vars = self.model.get_tensors_by_names(input_names)
-        output_vars = self.model.get_tensors_by_names(output_names, tower)
+        output_vars = self.model.get_tensors_by_names(output_names, is_training=False,
+                                                      name_prefix='towerp{}/'.format(tower), tower=tower)
 
         def func(inputs):
             assert len(inputs) == len(raw_input_vars)

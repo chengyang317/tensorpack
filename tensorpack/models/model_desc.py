@@ -9,6 +9,8 @@ from collections import namedtuple
 import re
 from tensorpack.utils import logger
 from tensorpack.tfutils.common import get_tensor_by_name
+from tensorpack.tfutils.gradproc import CheckGradient
+from tensorpack.utils.search import get_elem_from_dict
 
 __all__ = ['ModelDesc', 'InputVar']
 
@@ -18,6 +20,11 @@ InputVar = namedtuple('InputVar', ['type', 'shape', 'name'])
 class ModelDesc(object):
     """ Base class for a model description """
     __metaclass__ = ABCMeta
+
+    def __init__(self):
+        # Collect all the variables which once be created in the build_graph function. Include variables from multi gpu
+        # train process and predict process
+        self.build_graph_variables = {'train': [], 'predict': []}
 
     def get_input_vars(self):
         """
@@ -41,32 +48,16 @@ class ModelDesc(object):
         g = tf.get_default_graph()
         return [g.get_tensor_by_name(name + ":0") for name in input_var_names]
 
+    def _add_build_graph_variables(self, variables_dict, is_training):
+        if is_training:
+            self.build_graph_variables['train'].append(variables_dict)
+        self.build_graph_variables['predict'].append(variables_dict)
+
     @abstractmethod
     def _get_input_vars(self):
         """:returns: a list of InputVar """
 
-    def _get_tensor_from_build(self, name, tower=0):
-        """
-        Find matched tensor in the variables dict created in _build_graph process
-        :param name: maybe a full name of a variable or a regex
-        :param tower: gpu index
-        :return: matched tensor or error
-        """
-        variables_dict = self.build_graph_variables[tower]
-        tensor = variables_dict.get(name, None)
-        if tensor is None:
-            keys = variables_dict.keys
-            matched_keys = []
-            for key in keys:
-                if re.search(name, key):
-                    matched_keys.append(key)
-            assert len(matched_keys) <= 1, "{} matched multi variabls {}".format(name, ','.join(matched_keys))
-            if len(matched_keys) == 0:
-                return None
-            tensor = variables_dict[matched_keys[0]]
-        return tensor
-
-    def get_tensors_by_names(self, names, tower=0):
+    def get_tensors_by_names(self, names, is_training=True, name_prefix='', tower=0):
         """
         Find matched tensors by names. The match process is firstly to match variables created in _build_graph func.
         And the to match target in the whole tensorflow graph.
@@ -77,13 +68,14 @@ class ModelDesc(object):
         """
         if not isinstance(names, (tuple, list)):
             names = list(names)
+        build_graph_variables = self.build_graph_variables['train' if is_training else 'predict'][tower]
         tensors = []
         for name in names:
-            tensor = self._get_tensor_from_build(name, tower)
+            tensor = get_elem_from_dict(build_graph_variables, name)
             if tensor is None:
-                name = 'tower{}/'.format(tower) + name
+                name = name_prefix + name
                 tensor = get_tensor_by_name(name)
-            assert tensor is None, "Can't match any tensor by {}".format(name)
+            assert tensor is not None, "Can't match any tensor by {}".format(name)
             tensors.append(tensor)
         return tensors
 
@@ -98,10 +90,9 @@ class ModelDesc(object):
         :param is_training: a boolean
         :returns: the cost to minimize. a scalar variable
         """
-        self.build_graph_variables = [] #used to store multi graph elemtents in multigpu case, index is gpu index
-        self._build_graph(model_inputs, is_training)
-        assert not self.build_graph_variables, \
-            "During _build_graph func, there has not added local variables in to build_graph_variables"
+        variables_dict = self._build_graph(model_inputs, is_training)
+        assert variables_dict is not None, "There has not returned local variables in the _build_graph function"
+        self._add_build_graph_variables(variables_dict, is_training)
 
     #@abstractmethod
     def _build_graph(self, inputs, is_training):

@@ -2,15 +2,13 @@
 # -*- coding: utf-8 -*-
 # File: concurrency.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
-
+import os
 import multiprocessing
 import threading
-
 import six
 from six.moves import queue, range
-
 from .common import *
-from ..tfutils import *
+from tensorpack.utils import logger
 from ..utils.concurrency import DIE
 
 try:
