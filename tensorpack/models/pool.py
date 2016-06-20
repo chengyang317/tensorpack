@@ -6,9 +6,22 @@ import tensorflow as tf
 import numpy as np
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.models.utils import *
+from tensorpack.tfutils.transformation import tensor_repeats
 
 __all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling', 'BilinearUpSample',
            'MaxPoolingWithArgmax', 'ArgmaxUnPooling']
+
+from tensorflow.python.framework import ops
+from tensorflow.python.ops import gen_nn_ops
+@ops.RegisterGradient("MaxPoolWithArgmax")
+def _MaxPoolWithArgmaxGrad(op, grad, some_other_arg):
+  return gen_nn_ops._max_pool_grad(op.inputs[0],
+                                   op.outputs[0],
+                                   grad,
+                                   op.get_attr("ksize"),
+                                   op.get_attr("strides"),
+                                   padding=op.get_attr("padding"),
+                                   data_format='NHWC')
 
 
 @layer.register()
@@ -185,7 +198,7 @@ def unpooling2x2_argmax(x, argmax):
     :param argmax: (b,h,w,c), (y * width + x) * channels + c.
     :return:
     """
-    assert x.get_shape().as_list() == argmax.get_shape().as_list()
+    # assert x.get_shape().as_list() == argmax.get_shape().as_list()
     # infer the shape as soon as possbile
     x_shape = x.get_shape().as_list()
     if not x_shape[0]:
@@ -226,7 +239,8 @@ def ArgmaxUnPooling(x, argmax, shape, stride=None):
     :return:
     """
     shape = shape2d(shape)
-    if shape[0] == 2 and shape[1] == 2 and not stride:
+    stride = shape2d(stride)
+    if shape[0] == 2 and shape[1] == 2 and stride[0] == 2 and stride[1] == 2:
         return unpooling2x2_argmax(x, argmax)
     raise LookupError('Fix it')
 

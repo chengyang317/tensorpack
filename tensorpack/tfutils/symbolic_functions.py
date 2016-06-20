@@ -14,6 +14,7 @@ __all__ = ['prediction_incorrect', 'one_hot', 'flatten', 'batch_flatten', 'logSo
 BOOLEN_TYPES = [tf.bool]
 NUMERIC_TYPES = [tf.float32, tf.float16, tf.float16, tf.int32, tf.int64, tf.int8, tf.int16, tf.uint8, tf.uint16]
 
+
 def one_hot(y, num_labels):
     """
     :param y: prediction. an Nx1 int tensor.

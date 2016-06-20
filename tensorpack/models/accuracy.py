@@ -12,14 +12,14 @@ __all__ = ['segm_pixel_accuracy', 'segm_mean_accuracy', 'segm_mean_IU', 'segm_fr
            'classification_accuracy']
 
 
-@layer.register()
+@layer.register(log_shape=False)
 def segm_pixel_accuracy(segm_eval, segm_gt, keys=None):
     """
-
-    :param segm_eval:
-    :param segm_gt:
-    :param keys:
-    :return:
+    Segmentation pixel accuracy layer
+    :param segm_eval: it is logits and shape is (b,h,w,c)
+    :param segm_gt: it is groundtruth label and shape is (b,h,w)
+    :param keys: add the output to graph keys's collection
+    :return: a tensor whose shape is (b,)
     """
     accuracy = SegmPredicts.pixel_accuracy(segm_eval, segm_gt)
     ret = tf.identity(accuracy, name='output')
@@ -28,8 +28,6 @@ def segm_pixel_accuracy(segm_eval, segm_gt, keys=None):
         for key in keys:
             tf.add_to_collection(key, ret)
     return ret
-
-
 
 
 @layer.register()

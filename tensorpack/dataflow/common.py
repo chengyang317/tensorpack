@@ -60,7 +60,9 @@ class BatchData(ProxyDataFlow):
         result = []
         for k in range(size):
             dt = data_holder[0][k]
-            if type(dt) in [int, bool]:
+            if dt is None:
+                tp = object
+            elif type(dt) in [int, bool]:
                 tp = 'int32'
             elif type(dt) == float:
                 tp = 'float32'

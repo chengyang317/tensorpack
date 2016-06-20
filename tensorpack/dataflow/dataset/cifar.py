@@ -23,6 +23,7 @@ __all__ = ['Cifar10', 'Cifar100']
 DATA_URL_CIFAR_10 = 'http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
 DATA_URL_CIFAR_100 = 'http://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz'
 
+
 def maybe_download_and_extract(dest_directory, cifar_classnum):
     """Download and extract the tarball from Alex's website.
        copied from tensorflow example """
@@ -41,6 +42,7 @@ def maybe_download_and_extract(dest_directory, cifar_classnum):
         filepath = os.path.join(dest_directory, filename)
         import tarfile
         tarfile.open(filepath, 'r:gz').extractall(dest_directory)
+
 
 def read_cifar(filenames, cifar_classnum):
     assert cifar_classnum == 10 or cifar_classnum == 100
@@ -65,6 +67,7 @@ def read_cifar(filenames, cifar_classnum):
             ret.append([img, label[k]])
     return ret
 
+
 def get_filenames(dir, cifar_classnum):
     assert cifar_classnum == 10 or cifar_classnum == 100
     if cifar_classnum == 10:
@@ -76,6 +79,7 @@ def get_filenames(dir, cifar_classnum):
         filenames = [os.path.join(dir, 'cifar-100-python', 'train'),
                      os.path.join(dir, 'cifar-100-python', 'test')]
     return filenames
+
 
 class CifarBase(DataFlow):
     """
@@ -138,9 +142,11 @@ class CifarBase(DataFlow):
         mean = self.get_per_pixel_mean()
         return np.mean(mean, axis=(0,1))
 
+
 class Cifar10(CifarBase):
     def __init__(self, train_or_test, shuffle=True, dir=None):
         super(Cifar10, self).__init__(train_or_test, shuffle, dir, 10)
+
 
 class Cifar100(CifarBase):
     def __init__(self, train_or_test, shuffle=True, dir=None):

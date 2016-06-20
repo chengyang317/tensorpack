@@ -11,7 +11,8 @@ from tensorpack.dataflow import DataFlow
 from tensorpack.tfutils import *
 from tensorpack.utils.stat import *
 
-__all__ = ['InferenceRunner', 'ClassificationError', 'ScalarStats', 'Inferencer', 'BinaryClassificationStats']
+__all__ = ['InferenceRunner', 'ClassificationError', 'ScalarStats', 'Inferencer', 'BinaryClassificationStats',
+           'SegmAccuracy']
 
 
 class Inferencer(object):
@@ -187,6 +188,42 @@ class ClassificationError(Inferencer):
 
     def _after_inference(self):
         self.trainer.write_scalar_summary(self.summary_name, self.err_stat.accuracy)
+
+
+class SegmAccuracy(Inferencer):
+    """
+    Compute classification error from a `wrong` variable
+
+    The `wrong` variable is supposed to be an integer equal to the number of failed samples in this batch.
+    You can use `tf.nn.in_top_k` to record top-k error as well.
+
+    This callback produce the "true" error,
+    taking account of the fact that batches might not have the same size in
+    testing (because the size of test set might not be a multiple of batch size).
+    Therefore the result is different from averaging the error rate of each batch.
+    """
+    def __init__(self, output_name, summary_name='validation_error'):
+        """
+        :param output_name: the `wrong` variable
+        :param summary_name: the name for logging
+        """
+        self.output_name = output_name
+        self.summary_name = summary_name
+
+    def _get_output_tensors(self):
+        return [self.output_name]
+
+    def _before_inference(self):
+        self.accuracy_stat = Accuracy()
+
+    def _datapoint(self, dp, outputs):
+        batch_size = dp[0].shape[0]   # assume batched input
+        batch_accuracy = outputs[0]
+        mean_accuracy = np.mean(batch_accuracy)
+        self.accuracy_stat.feed(mean_accuracy, 1)
+
+    def _after_inference(self):
+        self.trainer.write_scalar_summary(self.summary_name, self.accuracy_stat.accuracy)
 
 
 class BinaryClassificationStats(Inferencer):

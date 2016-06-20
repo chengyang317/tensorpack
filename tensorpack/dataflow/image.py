@@ -69,10 +69,10 @@ class AugmentImagesTogether(MapData):
 
         def func(dp):
             im = dp[index[0]]
-            im, prms = self.augs._augment_return_params(im)
+            im = self.augs.augment(im)
             dp[index[0]] = im
             for idx in index[1:]:
-                dp[idx] = self.augs._augment(dp[idx], prms)
+                dp[idx] = self.augs.augment(dp[idx])
             return dp
 
         super(AugmentImagesTogether, self).__init__(ds, func)

@@ -56,7 +56,7 @@ def msra_initializer(filter_shape, filler_config):
     :return:
     """
     variance_norm = filler_config.variance_norm.upper()
-    assert variance_norm in ['AVERAGE', 'FAN_OUT']
+    assert variance_norm in ['AVERAGE', 'FAN_IN']
     assert None not in filter_shape
     assert len(filter_shape) == 4
 

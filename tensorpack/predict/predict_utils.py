@@ -22,7 +22,7 @@ class SegmPredicts(object):
         segm_gt_shape = get_shape(segm_gt)
         assert len(segm_eval_shape) == 4 and len(segm_gt_shape) == 3
         # shape is (b,h,w)
-        segm_eval = tf.squeeze(tf.nn.top_k(segm_eval, k=1))
+        segm_eval = tf.squeeze(tf.nn.top_k(segm_eval, k=1)[1])
         bool_true = tf.equal(segm_eval, segm_gt)
         # shape is (b,)
         accuracy = tf.reduce_mean(tf.cast(bool_true, tf.float32), reduction_indices=[1, 2])

@@ -5,6 +5,7 @@ import numpy as np
 
 __all__ = ['StatCounter', 'Accuracy', 'BinaryStatistics']
 
+
 class StatCounter(object):
     def __init__(self):
         self.reset()
@@ -33,6 +34,7 @@ class StatCounter(object):
     def max(self):
         assert len(self.values)
         return max(self.values)
+
 
 class Accuracy(object):
     def __init__(self):

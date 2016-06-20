@@ -45,7 +45,7 @@ class VOC12Meta(object):
 
     @staticmethod
     def get_image_path_list(image_dir, image_basename_list, ext):
-        image_path_list = [os.path.join(image_dir, image_basename, ext) for image_basename in image_basename_list]
+        image_path_list = [os.path.join(image_dir, image_basename + ext) for image_basename in image_basename_list]
         return image_path_list
 
     @staticmethod
@@ -76,7 +76,7 @@ class VOC12Meta(object):
         channel mean for rgb
         :return:
         """
-        rgb_mean = np.array([123.68, 116.779, 103.939], dtype=np.float32)
+        rgb_mean = np.array([103.939, 116.779, 123.68], dtype=np.float32)
         return rgb_mean
 
 
@@ -179,15 +179,15 @@ class VOC12Seg(DataFlow):
         for k in idxs:
             image_path, label_path = self.img_label_list[k]
             image = cv2.imread(image_path, cv2.IMREAD_COLOR) #bgr
-            assert image is not None, image_path
+            assert image is not None and image.ndim in (2, 3)
             if image.ndim == 2:
                 image = np.expand_dims(image, 2).repeat(3, 2)
-
+            image = image - self.meta.get_per_channel_mean()[::-1]
             if label_path is None:
                 label = None
             else:
                 label = cv2.imread(label_path, cv2.IMREAD_COLOR)
-                assert label is not None, label_path
+                assert label is not None and label.ndim in (2, 3)
                 if label.ndim == 2:
                     continue
                 label = self.meta.convert_from_color_segmentation(label)

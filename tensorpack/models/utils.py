@@ -34,7 +34,10 @@ class Layer(object):
                     'name must be the first argument. Args: {}'.format(args)
                 args = args[1:]
                 do_summary = kwargs.pop('summary_activation', summary_activation)
-                inputs = args[0]
+                try:
+                    inputs = args[0]
+                except: # sometimes func(x=l....), so the args[0] is None
+                    inputs = kwargs.pop('x')
                 # update from current argument scope
                 actual_args = copy.copy(argscope.get_arg_scope()[layer_func.__name__])
                 actual_args.update(kwargs)

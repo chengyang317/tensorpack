@@ -93,7 +93,7 @@ def get_config(cifar_classnum):
     step_per_epoch = 5
     dataset_test = get_data('test', cifar_classnum)
 
-    sess_config = tp.get_default_sess_config(0.5)
+    sess_config = tp.get_default_sess_config(0.1)
 
     nr_gpu = tp.get_nr_gpu()
     lr = tf.train.exponential_decay(

@@ -4,6 +4,7 @@
 # Time: 6/17/16 -> 10:03 PM
 import numpy as np
 from tensorpack.dataflow.imgaug.base import *
+from tensorpack.tfutils.symbolic_functions import cast_list
 
 __all__ = ['Padding']
 
@@ -45,7 +46,7 @@ class Padding(ImageAugmentor):
 
     def _get_augment_params(self, img):
         origin_shape = img.shape
-        target_shape = self.target_shape
+        target_shape = cast_list(self.target_shape)
         o_ndim = len(origin_shape)
         t_ndim = len(target_shape)
         assert o_ndim in (2, 3)
@@ -55,7 +56,7 @@ class Padding(ImageAugmentor):
                 target_shape = _shape2d(target_shape)
             else:
                 target_shape = _shape3d(target_shape, origin_shape[2])
-        pad_nums = map(lambda x, y: max(0, x-y), origin_shape, target_shape)
+        pad_nums = map(lambda x, y: max(0, x-y), target_shape, origin_shape)
         pad_width = zip([0] * len(origin_shape), pad_nums)
         return pad_width, self.pad_value
 

@@ -27,6 +27,7 @@ This model uses the whole training set instead of a train-val split.
 
 BATCH_SIZE = 128
 
+
 class Model(ModelDesc):
     def __init__(self, n):
         super(Model, self).__init__()
