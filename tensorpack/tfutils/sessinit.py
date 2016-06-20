@@ -13,7 +13,7 @@ import six
 from ..utils import logger
 
 __all__ = ['SessionInit', 'NewSession', 'SaverRestore',
-           'ParamRestore',
+           'ParamRestore', 'ChainInit',
            'JustCurrentSession',
            'dump_session_params']
 
@@ -65,7 +65,6 @@ class SaverRestore(SessionInit):
     def _init(self, sess):
         logger.info(
             "Restoring checkpoint from {}.".format(self.path))
-        sess.run(tf.initialize_all_variables())
         chkpt_vars = SaverRestore._read_checkpoint_vars(self.path)
         vars_map = SaverRestore._get_vars_to_restore_multimap(chkpt_vars)
         for dic in SaverRestore._produce_restore_dict(vars_map):
@@ -131,8 +130,8 @@ class ParamRestore(SessionInit):
         self.prms = param_dict
 
     def _init(self, sess):
-        sess.run(tf.initialize_all_variables())
-        variables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+        # allow restore non-trainable variables
+        variables = tf.get_collection(tf.GraphKeys.VARIABLES)
         var_dict = dict([v.name, v] for v in variables)
         for name, value in six.iteritems(self.prms):
             if not name.endswith(':0'):
@@ -145,10 +144,26 @@ class ParamRestore(SessionInit):
             logger.info("Restoring param {}".format(name))
             varshape = tuple(var.get_shape().as_list())
             if varshape != value.shape:
-                assert np.prod(varshape) == np.prod(value.shape)
+                assert np.prod(varshape) == np.prod(value.shape), \
+                        "{}: {}!={}".format(name, varshape, value.shape)
                 logger.warn("Param {} is reshaped during loading!".format(name))
                 value = value.reshape(varshape)
             sess.run(var.assign(value))
+
+def ChainInit(SessionInit):
+    """ Init a session by a list of SessionInit instance."""
+    def __init__(self, sess_inits, new_session=True):
+        """
+        :params sess_inits: list of `SessionInit` instances.
+        :params new_session: add a `NewSession()` and the beginning, if not there
+        """
+        if new_session and not isinstance(sess_inits[0], NewSession):
+            sess_inits.insert(0, NewSession())
+        self.inits = sess_inits
+
+    def _init(self, sess):
+        for i in self.inits:
+            i.init(sess)
 
 def dump_session_params(path):
     """ Dump value of all trainable variables to a dict and save to `path` as

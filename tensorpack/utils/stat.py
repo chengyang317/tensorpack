@@ -3,56 +3,69 @@
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 import numpy as np
 
-__all__ = ['StatCounter', 'Accuracy', 'BinaryStatistics']
+__all__ = ['StatCounter', 'Accuracy', 'BinaryStatistics', 'RatioCounter']
 
 
 class StatCounter(object):
+    """ A simple counter"""
     def __init__(self):
         self.reset()
 
     def feed(self, v):
-        self.values.append(v)
+        self._values.append(v)
 
     def reset(self):
-        self.values = []
+        self._values = []
 
     @property
     def count(self):
-        return len(self.values)
+        return len(self._values)
 
     @property
     def average(self):
-        assert len(self.values)
-        return np.mean(self.values)
+        assert len(self._values)
+        return np.mean(self._values)
 
     @property
     def sum(self):
-        assert len(self.values)
-        return np.sum(self.values)
+        assert len(self._values)
+        return np.sum(self._values)
 
     @property
     def max(self):
-        assert len(self.values)
-        return max(self.values)
+        assert len(self._values)
+        return max(self._values)
 
 
-class Accuracy(object):
+class RatioCounter(object):
+    """ A counter to count ratio of something"""
     def __init__(self):
         self.reset()
 
     def reset(self):
-        self.tot = 0
-        self.corr = 0
+        self._tot = 0
+        self._cnt = 0
 
-    def feed(self, corr, tot=1):
-        self.tot += tot
-        self.corr += corr
+    def feed(self, cnt, tot=1):
+        self._tot += tot
+        self._cnt += cnt
 
     @property
-    def accuracy(self):
-        if self.tot == 0:
+    def ratio(self):
+        if self._tot == 0:
             return 0
-        return self.corr * 1.0 / self.tot
+        return self._cnt * 1.0 / self._tot
+
+    @property
+    def count(self):
+        return self._tot
+
+
+class Accuracy(RatioCounter):
+    """ A RatioCounter with a fancy name """
+    @property
+    def accuracy(self):
+        return self.ratio
 
 
 class BinaryStatistics(object):

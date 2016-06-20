@@ -91,9 +91,12 @@ class EnqueueThread(threading.Thread):
                 pass
             except Exception:
                 logger.exception("Exception in EnqueueThread:")
-                self.sess.run(self.close_op)
-                self.coord.request_stop()
             finally:
+                try:
+                    self.sess.run(self.close_op)
+                except RuntimeError:    # session already closed
+                    pass
+                self.coord.request_stop()
                 logger.info("Enqueue Thread Exited.")
 
 

@@ -7,7 +7,9 @@ from abc import ABCMeta, abstractmethod
 
 from six.moves import range
 from tqdm import tqdm
-
+from abc import ABCMeta, abstractmethod
+import multiprocessing
+import os
 from .common import *
 from .concurrency import MultiProcessQueuePredictWorker
 from ..dataflow import DataFlow
@@ -68,7 +70,7 @@ class MultiProcessDatasetPredictor(DatasetPredictorBase):
         Run prediction in multiprocesses, on either CPU or GPU. Mix mode not supported.
         :param nr_proc: number of processes to use
         :param use_gpu: use GPU or CPU.
-            nr_proc cannot be larger than the total number of GPUs available
+            if GPU, then nr_proc cannot be larger than the total number of GPUs available
             in CUDA_VISIBLE_DEVICES or in the system.
         """
         assert config.return_input == False, "return_input not supported for MultiProcessDatasetPredictor"

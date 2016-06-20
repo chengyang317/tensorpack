@@ -1,9 +1,8 @@
 pandas
 tensorflow
 termcolor
-pillow
 tqdm
-msgpack
+msgpack-python
 msgpack-numpy
 beautifulsoup4
 more_itertools
@@ -11,3 +10,5 @@ matplotlib
 bs4
 msgpack-python
 msgpack_numpy
+subprocess32
+
