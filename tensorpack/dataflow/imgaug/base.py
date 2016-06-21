@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-# File: base.py
+# File: layer.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 
 from abc import abstractmethod, ABCMeta

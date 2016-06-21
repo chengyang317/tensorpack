@@ -18,8 +18,8 @@ class SegmPredicts(object):
         :param segm_gt: (b,h,w)
         :return: (b,)
         """
-        segm_eval_shape = get_shape(segm_eval)
-        segm_gt_shape = get_shape(segm_gt)
+        segm_eval_shape = create_shape(segm_eval)
+        segm_gt_shape = create_shape(segm_gt)
         assert len(segm_eval_shape) == 4 and len(segm_gt_shape) == 3
         # shape is (b,h,w)
         segm_eval = tf.squeeze(tf.nn.top_k(segm_eval, k=1)[1])
@@ -36,8 +36,8 @@ class SegmPredicts(object):
         :param segm_gt: (b,h,w)
         :return: (b,)
         """
-        segm_eval_shape = get_shape(segm_eval)
-        segm_gt_shape = get_shape(segm_gt)
+        segm_eval_shape = create_shape(segm_eval)
+        segm_gt_shape = create_shape(segm_gt)
         assert len(segm_eval_shape) == 4 and len(segm_gt_shape) == 3
         num_classes = segm_eval_shape[-1]
         # shape is (b,h,w,c)
@@ -60,8 +60,8 @@ class SegmPredicts(object):
         :param segm_gt:
         :return: tensor of the mean_IU values, shape is (b,)
         """
-        segm_eval_shape = get_shape(segm_eval)
-        segm_gt_shape = get_shape(segm_gt)
+        segm_eval_shape = create_shape(segm_eval)
+        segm_gt_shape = create_shape(segm_gt)
         assert len(segm_eval_shape) == 4 and len(segm_gt_shape) == 3
         num_classes = segm_eval_shape[-1]
         # shape is (b,h,w,c)
@@ -80,8 +80,8 @@ class SegmPredicts(object):
     @staticmethod
     def frequency_weighted_IU(segm_eval, segm_gt):
         """"""
-        segm_eval_shape = get_shape(segm_eval)
-        segm_gt_shape = get_shape(segm_gt)
+        segm_eval_shape = create_shape(segm_eval)
+        segm_gt_shape = create_shape(segm_gt)
         assert len(segm_eval_shape) == 4 and len(segm_gt_shape) == 3
         num_classes = segm_eval_shape[-1]
         # shape is (b,h,w,c)

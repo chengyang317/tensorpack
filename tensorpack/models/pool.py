@@ -24,7 +24,7 @@ def _MaxPoolWithArgmaxGrad(op, grad, some_other_arg):
                                    data_format='NHWC')
 
 
-@layer.register()
+@layer_manage.register()
 def MaxPooling(x, shape, stride=None, padding='VALID'):
     """
     MaxPooling on images.
@@ -45,7 +45,7 @@ def MaxPooling(x, shape, stride=None, padding='VALID'):
     return tf.nn.max_pool(x, ksize=shape, strides=stride, padding=padding)
 
 
-@layer.register()
+@layer_manage.register()
 def AvgPooling(x, shape, stride=None, padding='VALID'):
     """
     Average pooling on images.
@@ -66,7 +66,7 @@ def AvgPooling(x, shape, stride=None, padding='VALID'):
     return tf.nn.avg_pool(x, ksize=shape, strides=stride, padding=padding)
 
 
-@layer.register()
+@layer_manage.register()
 def GlobalAvgPooling(x):
     """
     Global average pooling as in `Network In Network
@@ -93,7 +93,7 @@ def UnPooling2x2ZeroFilled(x):
         return tf.reshape(out, [-1, sh[1] * 2, sh[2] * 2, sh[3]])
 
 
-@layer.register()
+@layer_manage.register()
 def FixedUnPooling(x, shape, unpool_mat=None):
     """
     Unpool the input with a fixed mat to perform kronecker product with.
@@ -132,7 +132,7 @@ def FixedUnPooling(x, shape, unpool_mat=None):
     return prod
 
 
-@layer.register()
+@layer_manage.register()
 def BilinearUpSample(x, shape):
     """
     Bilinear upsample the input images.
@@ -169,7 +169,7 @@ def BilinearUpSample(x, shape):
     return output
 
 
-@layer.register()
+@layer_manage.register()
 def MaxPoolingWithArgmax(x, shape, stride=None, padding='VALID'):
     """
     MaxPooling on image and while return indices
@@ -228,19 +228,21 @@ def unpooling2x2_argmax(x, argmax):
     return tf.mul(unpool_x, template)
 
 
-@layer.register()
-def ArgmaxUnPooling(x, argmax, shape, stride=None):
+@layer_manage.register()
+def ArgmaxUnPooling(x, argmax, shape_scale, out_shape=None, stride=None):
     """
     Unpool the input x using indices tensor argmax which is from tensorflow max_pool_with_argmax.
     :param x: (b,h,w,c)
     :param argmax: (b,h,w,c)
-    :param shape: int or [h, w]
+    :param shape_scale: int
+    :param out_shape:
     :param stride: int or [h, w]. default to be shape.
     :return:
     """
-    shape = shape2d(shape)
+
+    shape_scale = shape2d(shape_scale)
     stride = shape2d(stride)
-    if shape[0] == 2 and shape[1] == 2 and stride[0] == 2 and stride[1] == 2:
+    if shape_scale[0] == 2 and shape_scale[1] == 2 and stride[0] == 2 and stride[1] == 2:
         return unpooling2x2_argmax(x, argmax)
     raise LookupError('Fix it')
 

@@ -8,8 +8,9 @@ import tensorflow as tf
 from ..utils import logger
 
 __all__ = ['prediction_incorrect', 'one_hot', 'flatten', 'batch_flatten', 'logSoftmax', 'channel_flatten', 'cast_type',
-           'class_balanced_binary_class_cross_entropy', 'print_stat', 'rms', 'get_shape', 'get_size', 'BOOLEN_TYPES',
-           'NUMERIC_TYPES', 'mean_vector', 'reshape_like', 'cast_like', 'prediction_correct', 'cast_list']
+           'class_balanced_binary_class_cross_entropy', 'print_stat', 'rms', 'create_shape', 'get_size', 'BOOLEN_TYPES',
+           'NUMERIC_TYPES', 'mean_vector', 'reshape_like', 'cast_like', 'prediction_correct', 'cast_list',
+           'tensor_shape']
 
 BOOLEN_TYPES = [tf.bool]
 NUMERIC_TYPES = [tf.float32, tf.float16, tf.float16, tf.int32, tf.int64, tf.int8, tf.int16, tf.uint8, tf.uint16]
@@ -54,7 +55,7 @@ def batch_flatten(x):
     """
     Flatten the tensor except the first dimension.
     """
-    shape = get_shape(x)
+    shape = create_shape(x)
     if not isinstance(shape[0], tf.Tensor):
         return tf.reshape(x, [shape[0], -1])
     if tf.Tensor not in [type(item) for item in shape[1:]]:
@@ -68,7 +69,7 @@ def channel_flatten(x):
     :param x:
     :return:
     """
-    shape = get_shape(x)
+    shape = create_shape(x)
     if not isinstance(shape[-1], tf.Tensor):
         return tf.reshape(x, [-1, shape[-1]])
     if tf.Tensor not in [type(item) for item in shape[:-1]]:
@@ -126,7 +127,7 @@ def rms(x, name=None):
     return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
 
 
-def get_shape(x):
+def create_shape(x):
     """
     get a shape of tensor
     :param x:
@@ -140,6 +141,20 @@ def get_shape(x):
         if item is None:
             shape[i] = shape_t[i]
     return shape
+
+
+def tensor_shape(x):
+    """
+    x shape has such forms: None, [], [None,,,], [b,h,w....]
+    :param x:
+    :return:
+    """
+    return x._shape_as_list()
+
+
+
+
+
 
 
 def get_size(x):
@@ -187,7 +202,7 @@ def mean_vector(x):
 
 
 def reshape_like(x, y):
-    y_shape = get_shape(y)
+    y_shape = create_shape(y)
     return tf.reshape(x, y_shape)
 
 
@@ -197,5 +212,5 @@ def cast_like(x, y):
 
 def cast_list(x):
     if isinstance(x, (tuple, list)):
-        return list(x)
-    return [x]
+        return x
+    return list(x)

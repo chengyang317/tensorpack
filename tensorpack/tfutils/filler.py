@@ -4,8 +4,13 @@
 # Time: 5/31/16 -> 5:46 PM
 import tensorflow as tf
 import numpy as np
+from tensorpack.framework.registry import Registry
+from tensorpack.proto import tensorpack_pb2 as pb
 
-__all__ = ['FillerConfig', 'get_initializer', 'get_w_default_initializer', 'get_b_default_initilizer']
+__all__ = ['FillerConfig', 'get_initializer', 'get_w_default_initializer', 'get_b_default_initilizer',
+           'filler_registry']
+
+filler_registry = Registry(register_name='filler')
 
 
 class FillerConfig(object):
@@ -26,97 +31,97 @@ class FillerConfig(object):
         assert len(kwargs) == 0, 'Unknown arguments: {}'.format(str(kwargs.keys()))
 
 
-def xavier_initializer(filter_shape, filler_config):
+@filler_registry.register('xavier')
+def xavier_initializer(filler_param, filler_shape):
     """
     provie a xavier initializer
-    :param filter_shape: h,w,ch_in,ch_out
-    :param filler_config:
+    :param filler_shape: h,w,ch_in,ch_out
+    :param filler_param:
     :return:
     """
-    variance_norm = filler_config.variance_norm.upper()
-    assert variance_norm in ['AVERAGE', 'FAN_OUT']
-    assert None not in filter_shape
-    assert len(filter_shape) == 4
-
-    fan_out = np.prod(filter_shape) / filter_shape[2]
-    if variance_norm == 'AVERAGE':
-        fan_in = np.prod(filter_shape[:3])
+    assert filler_param.type == 'xavier'
+    variance_norm = filler_param.variance_norm
+    fan_out = np.prod(filler_shape) / filler_shape[2]
+    fan_in = np.prod(filler_shape[:3])
+    n = fan_in  # default is fan_in
+    if variance_norm == pb.FillerParameter.AVERAGE:
         n = (fan_in + fan_out) / 2
-    else:
+    elif variance_norm == pb.FillerParameter.FAN_OUT:
         n = fan_out
     scale = np.sqrt(3.0/n)
     return tf.random_uniform_initializer(-scale, scale)
 
 
-def msra_initializer(filter_shape, filler_config):
+@filler_registry.register('msra')
+def msra_initializer(filler_param, filler_shape):
     """
     provie a xavier initializer
-    :param filter_shape: h,w,ch_in,ch_out
-    :param filler_config:
+    :param filler_shape: h,w,ch_in,ch_out
+    :param filler_param:
     :return:
     """
-    variance_norm = filler_config.variance_norm.upper()
-    assert variance_norm in ['AVERAGE', 'FAN_IN']
-    assert None not in filter_shape
-    assert len(filter_shape) == 4
-
-    fan_out = np.prod(filter_shape) / filter_shape[2]
-    if variance_norm == 'AVERAGE':
-        fan_in = np.prod(filter_shape[:3])
+    assert filler_param.type == 'msra'
+    variance_norm = filler_param.variance_norm
+    fan_out = np.prod(filler_shape) / filler_shape[2]
+    fan_in = np.prod(filler_shape[:3])
+    n = fan_in  # default is fan_in
+    if variance_norm == pb.FillerParameter.AVERAGE:
         n = (fan_in + fan_out) / 2
-    else:
+    elif variance_norm == pb.FillerParameter.FAN_OUT:
         n = fan_out
     std = np.sqrt(2.0/n)
     return tf.random_normal_initializer(stddev=std)
 
 
-def constant_initializer(filter_shape, filler_config):
+@filler_registry.register('constant')
+def constant_initializer(filler_param, filler_shape=None):
     """
-
-    :param filter_shape:
-    :param filler_config:
+    :param filler_shape:
+    :param filler_param:
     :return:
     """
-    value = filler_config.value
+    assert filler_param.type == 'constant'
+    value = filler_param.value
     return tf.constant_initializer(value)
 
 
-def custom_initializer(filter_shape, filler_config):
+@filler_registry.register('custom')
+def custom_initializer(filler_param, filler_shape):
     """
-
-    :param filter_shape: h,w,ch_in,ch_out
-    :param filler_config:
+    :param filler_param: h,w,ch_in,ch_out
+    :param filler_shape:
     :return:
     """
-    value = np.array(filler_config.value)
-    assert value.size == np.prod(filter_shape)
-    value.reshape(filter_shape)
-    return tf.constant_initializer(value)
+    assert filler_param.type == 'custom'
+    custom_value = np.array(filler_param.custom_value)
+    assert custom_value.size == np.prod(filler_shape)
+    custom_value.reshape(filler_shape)
+    return tf.constant_initializer(custom_value)
 
 
-def uniform_unit_scaling_initializer(filter_shape, filler_config):
+@filler_registry.register('uniform_unit_scaling')
+def uniform_unit_scaling_initializer(filler_param, filler_shape=None):
     """
-
-    :param filter_shape:
-    :param filler_config:
+    :param filler_param:
+    :param filler_shape:
     :return:
     """
-    factor = filler_config.factor
+    assert filler_param.type == 'uniform_unit_scaling'
+    factor = filler_param.factor
     return tf.uniform_unit_scaling_initializer(factor=factor)
 
 
-def random_norm_initializer(filter_shape, filler_config):
+@filler_registry.register('gaussian')
+def gaussian_initializer(filler_param, filler_shape=None):
     """
-
-    :param filter_shape:
-    :param filler_config:
+    :param filler_param:
+    :param filler_shape:
     :return:
     """
-    mean = filler_config.mean
-    std = filler_config.std
-    dtype = filler_config.dtype
-    seed = filler_config.seed
-    return tf.random_normal_initializer(mean=mean, std=std, seed=seed, dtype=dtype)
+    assert filler_param.type == 'gaussian'
+    mean = filler_shape.mean
+    std = filler_shape.std
+    return tf.random_normal_initializer(mean=mean, stddev=std)
 
 
 def get_initializer(filter_shape=None, filler_config=None):
@@ -137,7 +142,7 @@ def get_initializer(filter_shape=None, filler_config=None):
     elif filler_config.type.upper() == 'CUSTOM':
         custom_initializer(filter_shape, filler_config)
     elif filler_config.type.upper() == 'RANDOM_NORM':
-        random_norm_initializer(filter_shape, filler_config)
+        gaussian_initializer(filter_shape, filler_config)
     elif filler_config.type.upper() == 'UNIFORM_UNIT_SCALING':
         uniform_unit_scaling_initializer(filter_shape, filler_config)
     else:
@@ -166,3 +171,6 @@ def get_b_default_initilizer(filter_shape=None, filler_config=None):
     assert not filler_config
     filler_config = FillerConfig(type='constant')
     get_initializer(filter_shape, filler_config)
+
+
+

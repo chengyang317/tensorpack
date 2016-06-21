@@ -3,7 +3,7 @@
 # Author: philipcheng
 # Time: 6/16/16 -> 9:56 AM
 import tensorflow as tf
-from tensorpack.models.utils import layer
+from tensorpack.models.utils import layer_manage
 from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.utils.utils import memoized
 from tensorpack.utils import logger
@@ -12,7 +12,7 @@ import re
 __all__ = ['segm_loss', 'regularize_loss', 'classification_loss', 'sum_loss']
 
 
-@layer.register()
+@layer_manage.register()
 def classification_loss(logits, labels, sparse=True, keys=None):
     logits = cast_type(logits, [tf.float32, tf.float64])
     logits = channel_flatten(logits)
@@ -32,7 +32,7 @@ def classification_loss(logits, labels, sparse=True, keys=None):
     return ret
 
 
-@layer.register()
+@layer_manage.register()
 def segm_loss(segm_eval, segm_gt, keys=None):
     """
 
@@ -40,8 +40,8 @@ def segm_loss(segm_eval, segm_gt, keys=None):
     :param segm_gt: groud truth image. (b,h,w)
     :return:
     """
-    segm_eval_shape = get_shape(segm_eval)
-    segm_gt_shape = get_shape(segm_gt)
+    segm_eval_shape = create_shape(segm_eval)
+    segm_gt_shape = create_shape(segm_gt)
     assert len(segm_eval_shape) == 4 and len(segm_gt_shape) == 3
     # reshape the segm_eval to (b*h*w,c), segm_gt to (b*h*w,)
     logits = tf.reshape(segm_eval, [-1, segm_eval_shape[-1]])
@@ -62,7 +62,7 @@ def _log_regularizer(name):
     logger.info("Apply regularizer for {}".format(name))
 
 
-@layer.register(log_shape=False)
+@layer_manage.register(log_shape=False)
 def regularize_loss(regex, weight_delay=0.004, loss_func=tf.nn.l2_loss, keys=None):
     """
         Apply a regularizer on every trainable variable matching the regex.
@@ -89,7 +89,7 @@ def regularize_loss(regex, weight_delay=0.004, loss_func=tf.nn.l2_loss, keys=Non
     return ret
 
 
-@layer.register()
+@layer_manage.register()
 def sum_loss(losses, keys=None):
     ret = tf.add_n(losses, name='output')
     if keys is not None:

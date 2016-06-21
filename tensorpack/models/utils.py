@@ -11,10 +11,12 @@ from tensorpack.tfutils.modelutils import get_shape_str
 from tensorpack.tfutils.summary import add_activation_summary
 from tensorpack.utils import logger
 
-__all__ = ['layer', 'shape2d', 'shape4d']
+__all__ = ['layer_manage', 'shape2d', 'shape4d']
 
 
-class Layer(object):
+
+
+class LayerManage(object):
     """
     Layes
     """
@@ -72,7 +74,7 @@ class Layer(object):
         return wrapper
 
 
-layer = Layer()
+layer_manage = LayerManage()
 
 
 def shape2d(a):
@@ -90,6 +92,9 @@ def shape2d(a):
 def shape4d(a):
     # for use with tensorflow
     return [1] + shape2d(a) + [1]
+
+
+
 
 
 

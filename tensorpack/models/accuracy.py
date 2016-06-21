@@ -12,7 +12,7 @@ __all__ = ['segm_pixel_accuracy', 'segm_mean_accuracy', 'segm_mean_IU', 'segm_fr
            'classification_accuracy']
 
 
-@layer.register(log_shape=False)
+@layer_manage.register(log_shape=False)
 def segm_pixel_accuracy(segm_eval, segm_gt, keys=None):
     """
     Segmentation pixel accuracy layer
@@ -30,7 +30,7 @@ def segm_pixel_accuracy(segm_eval, segm_gt, keys=None):
     return ret
 
 
-@layer.register()
+@layer_manage.register()
 def segm_mean_accuracy(segm_eval, segm_gt, keys=None):
     """
 
@@ -47,7 +47,7 @@ def segm_mean_accuracy(segm_eval, segm_gt, keys=None):
     return ret
 
 
-@layer.register()
+@layer_manage.register()
 def segm_mean_IU(segm_eval, segm_gt, keys=None):
     """
 
@@ -64,7 +64,7 @@ def segm_mean_IU(segm_eval, segm_gt, keys=None):
     return ret
 
 
-@layer.register()
+@layer_manage.register()
 def segm_frequency_weighted_IU(segm_eval, segm_gt, keys=None):
     """
 
@@ -81,7 +81,7 @@ def segm_frequency_weighted_IU(segm_eval, segm_gt, keys=None):
     return ret
 
 
-@layer.register()
+@layer_manage.register()
 def classification_accuracy(logits, labels, right=False, keys=None):
     if right:
         correct = prediction_correct(logits, labels)
