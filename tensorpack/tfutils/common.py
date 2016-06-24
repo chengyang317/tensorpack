@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
-# File: common.py
+# File: dropout.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
 from contextlib import contextmanager
 from copy import copy

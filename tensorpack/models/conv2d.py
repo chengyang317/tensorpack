@@ -1,101 +1,73 @@
-#!/usr/bin/env python2
-# -*- coding: UTF-8 -*-
-# File: conv2d.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
 import tensorflow as tf
-from tensorpack.tfutils.filler import *
-from tensorpack.models.utils import layer_manage
 from tensorpack.models.layer import Layer, layer_class_register
-from tensorpack.tfutils.symbolic_functions import cast_list, tensor_shape
-from tensorpack.tfutils.variable import WeightCreater, BisaCreater
-from tensorpack.proto import tensorpack_pb2 as pb
+from tensorpack.proto.caffe_pb2 import FillerParameter
+from tensorpack.models.utils import shape2d, shape4d
+from tensorpack.tfutils.variable import weight_create, bias_create
 
-__all__ = ['BaseConvolution']
-
+__all__ = ['Convolution']
 
 
 class BaseConvolution(Layer):
     """"""
-    def __init__(self, inputs, params):
-        super(BaseConvolution, self).__init__(inputs, params)
-        self.weight_creater = WeightCreater()
-        self.bias_creater = BisaCreater()
 
-    def _weight_shape(self):
-        params = self.params
-        channels = self.input_shape[-1]
-        num_output = params.num_output
-        weight_shape = []
-        if params.HasField('kernel_h') and params.HasField('kernel_w'):
-            assert not params.HasField('kernel_size')
-            weight_shape.append(params.kernel_h)
-            weight_shape.append(params.kernel_w)
+    @staticmethod
+    def _layer_setup(input_tensors, layer_params):
+        forward_params = {'x': input_tensors.values()[0]}
+        assert layer_params.HasField('convolution_param')
+        convolution_param = layer_params.convolution_param
+        assert convolution_param.HasField('num_output')
+        forward_params['num_output'] = convolution_param.num_outpweight_createut
+        forward_params['kernel_size'] = convolution_param.kernel_size
+        forward_params['group'] = convolution_param.group
+        forward_params['weight_filler'] = convolution_param.weight_filler
+        forward_params['bias_term'] = convolution_param.bias_term
+        forward_params['bias_filler'] = convolution_param.bias_filler
+        forward_params['stride'] = convolution_param.stride
+        if convolution_param.HasField('stride_h') and convolution_param.HasField('stride_w'):
+            forward_params['stride'] = (convolution_param.stride_h, convolution_param.stride_w)
+        if convolution_param.HasField('pad') or convolution_param.HasField('pad_h'):
+            forward_params['pad'] = 'VALID'
         else:
-            kernel_size_size = len(params.kernel_size)
-            assert kernel_size_size == 2
-            weight_shape.extend(params.kernel_size)
-        weight_shape.append(channels)
-        weight_shape.append(num_output)
-        return weight_shape
+            forward_params['pad'] = 'SAME'
+        return forward_params
 
-    def _stride_4d(self):
-        params = self.params
-        strides = [1]
-        if params.HasField('stride_h') and params.HasField('stride_w'):
-            assert not params.HasField('stride')
-            strides.append(params.kernel_h)
-            strides.append(params.kernel_w)
-        else:
-            strides.append(params.stride)
-            strides.append(params.stride)
-        strides.append(1)
-        return strides
-
-    def _weight_process(self):
-        self.weight_var = self.weight_creater.create(self.weight_shape, self.params.weight_filler)
-
-    def _bias_process(self):
-        self.bias_var = self.bias_creater.create([self.weight_shape[-1]], self.params.bias_filler)
-
-    def _layer_setup(self):
-        self.inputs = cast_list(self.inputs)
-        assert len(self.inputs) == 1 and isinstance(self.params, pb.ConvolutionParameter)
-        # setup input shape
-        self.input_shape = tensor_shape(self.inputs[0])
-        # setup strids and padding
-        self.stride_4d = self._stride_4d()
-        self.padding = 'VALID'
-        if self.params.pad == pb.ConvolutionParameter.SAME:
-            self.padding = 'SAME'
-        # setup kernel shape
-        self.weight_shape = self._weight_shape()
-        # handle weights and bias
-        self.bias_term = self.params.bias_term
-        self._weight_process()
-        if self.bias_term:
-            self._bias_process()
-
-    def _forward(self):
-        group = self.params.group
-        if group == 1:
-            self.conv_2d = tf.nn.conv2d(self.inputs[0], self.weight_var, self.stride_4d, self.padding)
-        else:
-            inputs = tf.split(3, group, self.inputs[0])
-            weight_vars = tf.split(3, group, self.weight_var)
-            conv_2ds = [tf.nn.conv2d(i, k, self.stride_4d, self.padding)
-                       for i, k in zip(inputs, weight_vars)]
-            self.conv_2d = tf.concat(3, conv_2ds)
-        if self.bias_term:
-            self.conv_2d = tf.nn.bias_add(self.conv_2d, self.bias_var)
-        self.outputs = [self.conv_2d]
-
-    def _reshape(self):
+    @staticmethod
+    def _forward():
         pass
 
 
 @layer_class_register.register('CONVOLUTION')
-class Conv2D(BaseConvolution):
-    pass
+class Convolution(BaseConvolution):
+    """"""
+
+    @staticmethod
+    def _forward(x, num_output, kernel_size, pad, stride=1, weight_filler=None, bias_filler=None, group=1,
+                 bias_term=True):
+        in_shape = x.get_shape().as_list()
+        in_channel = in_shape[-1]
+        assert in_channel % group == 0 and num_output % group == 0
+        kernel_shape = shape2d(kernel_size)
+        pad = pad.upper()
+        filter_shape = kernel_shape + [in_channel / group, num_output]
+        stride = shape4d(stride)
+        if weight_filler is None:
+            weight_filler = FillerParameter(type='xavier')
+        if bias_term and not bias_filler:
+            bias_filler = FillerParameter(type='constant')
+
+        w_var = weight_create(weight_filler, filter_shape)
+        if bias_term:
+            bias_var = bias_create(bias_filler, [num_output])
+
+        if group == 1:
+            conv = tf.nn.conv2d(x, w_var, stride, pad)
+        else:
+            inputs = tf.split(3, group, x)
+            kernels = tf.split(3, group, w_var)
+            outputs = [tf.nn.conv2d(i, k, stride, pad) for i, k in zip(inputs, kernels)]
+            conv = tf.concat(3, outputs)
+        return tf.nn.bias_add(conv, bias_term) if bias_term else conv
+
 
 
 

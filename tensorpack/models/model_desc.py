@@ -6,7 +6,7 @@
 from abc import ABCMeta, abstractmethod
 import tensorflow as tf
 from collections import namedtuple
-import re
+from tensorpack.models.net import Net
 from tensorpack.utils import logger
 from tensorpack.tfutils.common import get_tensor_by_name
 from tensorpack.tfutils.gradproc import CheckGradient
@@ -94,7 +94,7 @@ class ModelDesc(object):
         assert variables_dict is not None, "There has not returned local variables in the _build_graph function"
         self._add_build_graph_variables(variables_dict, is_training)
 
-    #@abstractmethod
+
     def _build_graph(self, inputs, is_training):
         if self._old_version():
             self.model_inputs = inputs
@@ -123,4 +123,22 @@ class ModelDesc(object):
     def get_gradient_processor(self):
         """ Return a list of GradientProcessor. They will be executed in order"""
         return [CheckGradient()]#, SummaryGradient()]
+
+
+class CaffeModel(ModelDesc):
+    """"""
+    def __init__(self, prototxt_path):
+        super(CaffeModel, self).__init__()
+        self.net = Net(prototxt_path)
+
+    def _get_input_vars(self):
+        """:returns: a list of InputVar """
+        input_tensors = self.net.raw_input_tensors.values()
+
+    def _build_graph(self, model_inputs, is_training):
+        self.net.build_net_graph(model_inputs, is_training)
+
+
+
+
 

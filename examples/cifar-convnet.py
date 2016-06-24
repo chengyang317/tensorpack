@@ -86,6 +86,7 @@ def get_data(train_or_test, cifar_classnum):
         ds = tp.PrefetchDataZMQ(ds, 5)
     return ds
 
+
 def get_config(cifar_classnum):
     # prepare dataset
     dataset_train = get_data('train', cifar_classnum)

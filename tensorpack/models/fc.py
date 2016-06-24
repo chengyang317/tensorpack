@@ -1,40 +1,63 @@
-#!/usr/bin/env python2
-# -*- coding: UTF-8 -*-
-# File: fc.py
-# Author: Yuxin Wu <ppwwyyxx@gmail.com>
-
 import tensorflow as tf
-from tensorpack.tfutils.filler import *
-from tensorpack.models.utils import layer_manage
-from tensorpack.tfutils.symbolic_functions import *
+from tensorpack.proto.caffe_pb2 import FillerParameter
+from tensorpack.models.layer import Layer, layer_class_register
+from tensorpack.tfutils.symbolic_functions import batch_flatten
+from tensorpack.tfutils.variable import weight_create, bias_create
 
 __all__ = ['FullyConnected']
 
 
-@layer_manage.register()
-def FullyConnected(x, out_dim, w_init_config=None, b_init_config=None, nl=tf.nn.relu, use_bias=True):
-    """
-    Fully-Connected layer.
+@layer_class_register.register('FullyConnected'.upper())
+class FullyConnected(Layer):
+    """"""
+    @staticmethod
+    def _layer_setup(input_tensors, layer_params):
+        forward_params = {'x': input_tensors.values()[0]}
+        assert layer_params.HasField('inner_product_param')
+        inner_product_param = layer_params.inner_product_param
+        assert inner_product_param.HasField('num_output')
+        forward_params['num_output'] = inner_product_param.num_output
+        forward_params['weight_filler'] = inner_product_param.weight_filler
+        forward_params['bias_term'] = inner_product_param.bias_term
+        forward_params['bias_filler'] = inner_product_param.bias_filler
+        return forward_params
 
-    :param input: a tensor to be flattened except the first dimension.
-    :param out_dim: output dimension
-    :param w_init_config: initializer for W. default to `xavier_initializer_conv2d`.
-    :param b_init_config: initializer for b. default to zero initializer.
-    :param nl: nonlinearity. default to `relu`.
-    :param use_bias: whether to use bias. a boolean default to True
-    :returns: a 2D tensor
-    """
-    x = batch_flatten(x)
-    in_dim = x.get_shape().as_list()[1]
-    filter_shape = [in_dim, out_dim]
-    if not w_init_config:
-        w_init_config = FillerConfig(type='uniform_unit_scaling', factor=1.43)
-    if not b_init_config:
-        b_init_config = FillerConfig(type='constant', value=0.0)
-    w_initializer = get_initializer(filter_shape, w_init_config)
-    b_initializer = get_initializer([out_dim], b_init_config)
-    W = tf.get_variable('W', [in_dim, out_dim], initializer=w_initializer)
-    if use_bias:
-        b = tf.get_variable('b', [out_dim], initializer=b_initializer)
-    prod = tf.nn.xw_plus_b(x, W, b) if use_bias else tf.matmul(x, W)
-    return nl(prod, name='output')
+    @staticmethod
+    def _forward(x, num_output, weight_filler=None, bias_filler=None, bias_term=True):
+        x = batch_flatten(x)
+        channel_dim = x.get_shape().as_list()[1]
+        filter_shape = [channel_dim, num_output]
+        if not weight_filler:
+            weight_filler = FillerParameter(type='uniform_unit_scaling', factor=1.43)
+        if bias_term and not bias_filler:
+            bias_filler = FillerParameter(type='constant')
+        w_var = weight_create(weight_filler, filter_shape)
+        if bias_term:
+            bias_var = bias_create(bias_filler, [num_output])
+        prod = tf.nn.xw_plus_b(x, w_var, bias_var) if bias_term else tf.matmul(x, w_var)
+        return prod
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -6,74 +6,94 @@ from abc import ABCMeta, abstractmethod
 import tensorflow as tf
 from tensorpack.framework.concat import Concat
 from tensorpack.framework.registry import Registry
-from tensorpack.proto.caffe_pb2 import V1LayerParameter
+from tensorpack.proto.caffe_pb2 import V1LayerParameter, LayerParameter
+from tensorpack.proto import lay_params_parser
 
 
-__all__ = ['Layer', 'layer_class_register']
+__all__ = ['Layer', 'layer_class_register', 'layer_create', 'layers_create']
 
 layer_class_register = Registry('layer_class')
-layer_create_func_register = Registry('layer_create_func')
 
 
-@layer_create_func_register.register('LayerParameter')
-def layer_create_from_layerparameter(layer_params):
-    layer_class = layer_class_register.look_up(layer_params.type.upper())
-    return layer_class(layer_params)
+def layer_create(layer_params):
+    layer_type = layer_params.type
+    if isinstance(layer_type, int):
+        layer_type = V1LayerParameter.LayerType.Name(layer_type)
+    else:
+        layer_type = layer_type.upper()
+    layer_class = layer_class_register.look_up(layer_type)
+    return layer_class(lay_params=layer_params)
 
 
-@layer_create_func_register.register('V1LayerParameter')
-def layer_create_from_v1layerparameter(layer_params):
-    key = V1LayerParameter.LayerType.Name(layer_params.type)
-    layer_class = layer_class_register.look_up(key)
-    return layer_class(layer_params)
-
-
-def layer_create(layer_params, layer_params_type):
-    layer_create_func = layer_create_func_register.look_up(layer_params_type)
-    return layer_create_func(layer_params)
+def layers_create(net_tensors, net_params):
+    ret_layers = []
+    if net_params.HasField('layer'):
+        layers_params = net_params.layer
+    else:
+        layers_params = net_params.layers
+    for layer_params in layers_params:
+        ret_layers.append(layer_create('caffe', net_tensors, layer_params))
+    return ret_layers
 
 
 class Layer(object):
     __metaclass__ = ABCMeta
 
-    def __init__(self, inputs, params):
-        self.inputs = inputs
-        self.params = params
+    def __new__(cls, *args, **kwargs):
+        obj = super(Layer, cls).__new__(cls)
+        if args[0] == 'caffe':
+            cls.__init__ = cls._caffe_init
+        else:
+            cls.__init__ = cls._tf_init
+        return obj
+
+    def _tf_init(self, *args, **kwargs):
+        self.mode = 'tf'
+        self.forward_params = (args, kwargs)
+        self.build_layer_graph()
+
+    def _caffe_init(self, layer_params):
+        self.mode = 'caffe'
+        assert isinstance(layer_params, (V1LayerParameter, LayerParameter))
+        self.net_tensors = {}
+        self.lay_params = layer_params
 
     def layer_setup(self):
-        self._layer_setup()
+        """
+        Only in caffe mode, it will be called
+        :return:
+        """
+        assert all(bottom in self.net_tensors for bottom in self.lay_params.bottom)
+        self.input_tensors = {bottom: self.net_tensors[bottom] for bottom in self.lay_params.bottom}
+        forward_kwargs = self._layer_setup(self.input_tensors, self.lay_params)
+        self.forward_params = ([], forward_kwargs)
 
     @abstractmethod
-    def _layer_setup(self):
-        """"""
-
-    def reshape(self):
-        self._reshape()
-
-    @abstractmethod
-    def _reshape(self):
-        """"""
+    def _layer_setup(self, input_tensors, lay_params):
+        """
+        :param input_tensors:
+        :param lay_params:
+        :return: forward_kwargs
+        """
 
     def forward(self):
-        return self._forward()
+        forward_params = self.forward_params
+        return self._forward(*forward_params[0], **forward_params[1])
 
     @abstractmethod
     def _forward(self):
         """"""
 
-    def build(self):
-        self.layer_setup()
-        self.forward()
-        self.reshape()
-
-
-class MultiLayers(Layer, Concat):
-    """"""
-    def __init__(self, inputs, layer_list, layer_param_list):
-        super(MultiLayers, self).__init__(layer_list, layer_param_list)
-
-    def _layer_setup(self):
+    def layer_func(self, input_tensors, **kwargs):
         pass
+
+    def build_layer_graph(self, net_tensors=None):
+        if self.mode == 'caffe':
+            self.layer_setup()
+            self.net_tensors.update(net_tensors)
+        outputs = self.forward()
+        assert len(outputs) == len(self.lay_params.top)
+        self.output_tensors = {top: outputs[ind] for ind, top in enumerate(self.lay_params.top)}
 
 
 

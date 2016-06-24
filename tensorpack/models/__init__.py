@@ -13,6 +13,6 @@ from tensorpack.models.spatial_transformer import *
 from tensorpack.models.loss import *
 from tensorpack.models.accuracy import *
 from tensorpack.models.utils import *
-from tensorpack.models.common import *
+from tensorpack.models.dropout import *
 from tensorpack.models.inputs import *
 from tensorpack.models.layer import *
