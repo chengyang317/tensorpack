@@ -33,19 +33,19 @@ class Model(ModelDesc):
 
         nl = PReLU.f
         image = image * 2 - 1
-        l = Conv2D('conv0', image, out_channel=32, kernel_shape=3, nl=nl,
-                   padding='VALID')
+        l = Conv2D('conv0', image, num_output=32, kernel_size=3, nl=nl,
+                   pad='VALID')
         l = MaxPooling('pool0', l, 2)
-        l = Conv2D('conv1', l, out_channel=32, kernel_shape=3, nl=nl, padding='SAME')
-        l = Conv2D('conv2', l, out_channel=32, kernel_shape=3, nl=nl, padding='VALID')
+        l = Conv2D('conv1', l, num_output=32, kernel_size=3, nl=nl, pad='SAME')
+        l = Conv2D('conv2', l, num_output=32, kernel_size=3, nl=nl, pad='VALID')
         l = MaxPooling('pool1', l, 2)
-        l = Conv2D('conv3', l, out_channel=32, kernel_shape=3, nl=nl, padding='VALID')
+        l = Conv2D('conv3', l, num_output=32, kernel_size=3, nl=nl, pad='VALID')
 
         l = FullyConnected('fc0', l, 512)
         l = tf.nn.dropout(l, keep_prob)
 
         # fc will have activation summary by default. disable this for the output layer
-        logits = FullyConnected('fc1', l, out_dim=10, nl=tf.identity)
+        logits = FullyConnected('fc1', l, num_output=10, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='prob')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)

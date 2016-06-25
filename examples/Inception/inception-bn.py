@@ -92,7 +92,7 @@ class Model(ModelDesc):
             l = inception('incep5b', l, 352, 192, 320, 192, 224, 128, 'max')
             l = GlobalAvgPooling('gap', l)
 
-        logits = FullyConnected('linear', l, out_dim=1000, nl=tf.identity)
+        logits = FullyConnected('linear', l, num_output=1000, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
         loss3 = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)
         loss3 = tf.reduce_mean(loss3, name='loss3')

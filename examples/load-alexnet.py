@@ -35,27 +35,27 @@ class Model(ModelDesc):
 
         image, label = inputs
 
-        l = Conv2D('conv1', image, out_channel=96, kernel_shape=11, stride=4, padding='VALID')
+        l = Conv2D('conv1', image, num_output=96, kernel_size=11, stride=4, pad='VALID')
         l = tf.nn.lrn(l, 2, bias=1.0, alpha=2e-5, beta=0.75, name='norm1')
         l = MaxPooling('pool1', l, 3, stride=2, padding='VALID')
 
-        l = Conv2D('conv2', l, out_channel=256, kernel_shape=5,
-                       padding='SAME', split=2)
+        l = Conv2D('conv2', l, num_output=256, kernel_size=5,
+                   pad='SAME', group=2)
         l = tf.nn.lrn(l, 2, bias=1.0, alpha=2e-5, beta=0.75, name='norm2')
         l = MaxPooling('pool2', l, 3, stride=2, padding='VALID')
 
-        l = Conv2D('conv3', l, out_channel=384, kernel_shape=3,
-                       padding='SAME')
-        l = Conv2D('conv4', l, out_channel=384, kernel_shape=3,
-                       padding='SAME', split=2)
-        l = Conv2D('conv5', l, out_channel=256, kernel_shape=3,
-                       padding='SAME', split=2)
+        l = Conv2D('conv3', l, num_output=384, kernel_size=3,
+                   pad='SAME')
+        l = Conv2D('conv4', l, num_output=384, kernel_size=3,
+                   pad='SAME', group=2)
+        l = Conv2D('conv5', l, num_output=256, kernel_size=3,
+                   pad='SAME', group=2)
         l = MaxPooling('pool3', l, 3, stride=2, padding='VALID')
 
         l = FullyConnected('fc6', l, 4096)
-        l = FullyConnected('fc7', l, out_dim=4096)
+        l = FullyConnected('fc7', l, num_output=4096)
         # fc will have activation summary by default. disable this for the output layer
-        logits = FullyConnected('fc8', l, out_dim=1000, nl=tf.identity)
+        logits = FullyConnected('fc8', l, num_output=1000, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
 
 def run_test(path, input):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File: common.py
+# File: dropout.py
 # Author: Yuxin Wu <ppwwyyxxc@gmail.com>
 
 

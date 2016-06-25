@@ -70,13 +70,13 @@ class Model(ModelDesc):
         """ image: [0,255]"""
         image = image / 255.0
         with argscope(Conv2D, nl=PReLU.f, use_bias=True):
-            l = Conv2D('conv0', image, out_channel=32, kernel_shape=5, stride=1)
+            l = Conv2D('conv0', image, num_output=32, kernel_size=5, stride=1)
             l = MaxPooling('pool0', l, 2)
-            l = Conv2D('conv1', l, out_channel=32, kernel_shape=5, stride=1)
+            l = Conv2D('conv1', l, num_output=32, kernel_size=5, stride=1)
             l = MaxPooling('pool1', l, 2)
-            l = Conv2D('conv2', l, out_channel=64, kernel_shape=4)
+            l = Conv2D('conv2', l, num_output=64, kernel_size=4)
             l = MaxPooling('pool2', l, 2)
-            l = Conv2D('conv3', l, out_channel=64, kernel_shape=3)
+            l = Conv2D('conv3', l, num_output=64, kernel_size=3)
 
             # the original arch
             #l = Conv2D('conv0', image, out_channel=32, kernel_shape=8, stride=4)
@@ -84,7 +84,7 @@ class Model(ModelDesc):
             #l = Conv2D('conv2', l, out_channel=64, kernel_shape=3)
 
         l = FullyConnected('fc0', l, 512, nl=lambda x, name: LeakyReLU.f(x, 0.01, name))
-        l = FullyConnected('fct', l, out_dim=NUM_ACTIONS, nl=tf.identity)
+        l = FullyConnected('fct', l, num_output=NUM_ACTIONS, nl=tf.identity)
         return l
 
     def _build_graph(self, inputs, is_training):

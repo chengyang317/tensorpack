@@ -65,7 +65,7 @@ class Model(ModelDesc):
         l = tf.nn.dropout(l, keep_prob)
         l = FullyConnected('fc7', l, 4096)
         l = tf.nn.dropout(l, keep_prob)
-        logits = FullyConnected('fc8', l, out_dim=1000, nl=tf.identity)
+        logits = FullyConnected('fc8', l, num_output=1000, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
         max_score = tf.reduce_max(logits, reduction_indices=1)
         image_grad = tf.gradients(ys=max_score, xs=image, name='image_grad')

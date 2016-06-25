@@ -3,7 +3,7 @@
 # Author: philipcheng
 # Time: 6/7/16 -> 11:55 PM
 import tensorflow as tf
-from tensorpack.models._common import layer_register
+from tensorpack.models.utils import layer
 from tensorpack.tfutils.meshgrid import meshgrid_3d
 from tensorpack.tfutils.transformation import *
 import numpy as np
@@ -98,7 +98,7 @@ def transformer(x, theta, out_shape):
     return out
 
 
-@layer_register()
+@layer.register()
 def spatial_transformer(x, local_net, out_shape):
     """
 

@@ -19,11 +19,11 @@ IMAGE_SIZE = 28
 
 def local_net(is_training):
     def func(x):
-        l = tp.FullyConnected('fc_local0', x, out_dim=20, nl=tf.nn.tanh)
+        l = tp.FullyConnected('fc_local0', x, num_output=20, nl=tf.nn.tanh)
         if is_training:
             l = tf.nn.dropout(l, 0.5)
-        l = tp.FullyConnected('fc_local1', l, out_dim=6, nl=tf.nn.tanh,
-                              b_init_config=tp.FillerConfig(type='custom', value=np.array([1., 0, 0, 0, 1., 0])))
+        l = tp.FullyConnected('fc_local1', l, num_output=6, nl=tf.nn.tanh,
+                              bias_filler=tp.FillerConfig(type='custom', value=np.array([1., 0, 0, 0, 1., 0])))
         return l
     return func
 
@@ -43,18 +43,18 @@ class Model(tp.ModelDesc):
         image = image * 2 - 1
         # add spatial_transformer layer
         image = tp.spatial_transformer('spatial', image, local_net=local_net(is_training), out_shape=(40, 40))
-        l = tp.Conv2D('conv0', image, out_channel=32, kernel_shape=3, nl=nl, padding='VALID')
+        l = tp.Conv2D('conv0', image, num_output=32, kernel_size=3, nl=nl, pad='VALID')
         l = tp.MaxPooling('pool0', l, 2)
-        l = tp.Conv2D('conv1', l, out_channel=32, kernel_shape=3, nl=nl, padding='SAME')
-        l = tp.Conv2D('conv2', l, out_channel=32, kernel_shape=3, nl=nl, padding='VALID')
+        l = tp.Conv2D('conv1', l, num_output=32, kernel_size=3, nl=nl, pad='SAME')
+        l = tp.Conv2D('conv2', l, num_output=32, kernel_size=3, nl=nl, pad='VALID')
         l = tp.MaxPooling('pool1', l, 2)
-        l = tp.Conv2D('conv3', l, out_channel=32, kernel_shape=3, nl=nl, padding='VALID')
+        l = tp.Conv2D('conv3', l, num_output=32, kernel_size=3, nl=nl, pad='VALID')
 
         l = tp.FullyConnected('fc0', l, 512)
         l = tf.nn.dropout(l, keep_prob)
 
         # fc will have activation summary by default. disable this for the output layer
-        logits = tp.FullyConnected('fc1', l, out_dim=10, nl=tf.identity)
+        logits = tp.FullyConnected('fc1', l, num_output=10, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='prob')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)

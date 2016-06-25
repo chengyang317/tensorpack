@@ -2,16 +2,13 @@
 # -*- coding: UTF-8 -*-
 # File: nonlin.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
-
 import tensorflow as tf
-from copy import copy
-
-from ._common import *
+from tensorpack.models.utils import layer
 from .batch_norm import BatchNorm
 
 __all__ = ['Maxout', 'PReLU', 'LeakyReLU', 'BNReLU', 'NonLinearity']
 
-@layer_register(log_shape=False)
+@layer.register(log_shape=False)
 def Maxout(x, num_unit):
     """
     Maxout networks as in `Maxout Networks <http://arxiv.org/abs/1302.4389>`_.
@@ -27,7 +24,7 @@ def Maxout(x, num_unit):
     x = tf.reshape(x, [-1, input_shape[1], input_shape[2], ch / num_unit, num_unit])
     return tf.reduce_max(x, 4, name='output')
 
-@layer_register(log_shape=False)
+@layer.register(log_shape=False)
 def PReLU(x, init=tf.constant_initializer(0.001), name=None):
     """
     Parameterized relu as in `Delving Deep into Rectifiers: Surpassing
@@ -44,7 +41,7 @@ def PReLU(x, init=tf.constant_initializer(0.001), name=None):
     else:
         return tf.mul(x, 0.5, name=name)
 
-@layer_register(log_shape=False)
+@layer.register(log_shape=False)
 def LeakyReLU(x, alpha, name=None):
     """
     Leaky relu as in `Rectifier Nonlinearities Improve Neural Network Acoustic
@@ -74,7 +71,7 @@ def BNReLU(is_training, **kwargs):
         return x
     return BNReLU
 
-@layer_register(log_shape=False)
+@layer.register(log_shape=False)
 def NonLinearity(x, nl):
     """
     :param input: any tensor.

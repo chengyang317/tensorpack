@@ -36,8 +36,8 @@ class Model(ModelDesc):
 
         def conv(name, l, channel, stride):
             return Conv2D(name, l, channel, 3, stride=stride,
-                          nl=tf.identity, use_bias=False,
-                          w_init_config=tf.random_normal_initializer(stddev=np.sqrt(2.0 / 9 / channel)))
+                          nl=tf.identity, bias_term=False,
+                          weight_filler=tf.random_normal_initializer(stddev=np.sqrt(2.0 / 9 / channel)))
 
         def residual(name, l, increase_dim=False, first=False):
             shape = l.get_shape().as_list()
@@ -88,7 +88,7 @@ class Model(ModelDesc):
         l = tf.nn.relu(l)
         # 8,c=64
         l = GlobalAvgPooling('gap', l)
-        logits = FullyConnected('linear', l, out_dim=10, nl=tf.identity)
+        logits = FullyConnected('linear', l, num_output=10, nl=tf.identity)
         prob = tf.nn.softmax(logits, name='output')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits, label)

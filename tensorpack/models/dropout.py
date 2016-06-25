@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-# File: common.py
+# File: dropout.py
 # Author: philipcheng
 # Time: 6/18/16 -> 9:41 PM
 import tensorflow as tf

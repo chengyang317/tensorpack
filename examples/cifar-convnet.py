@@ -2,10 +2,8 @@
 # -*- coding: UTF-8 -*-
 # File: cifar-convnet.py
 # Author: Yuxin Wu <ppwwyyxx@gmail.com>
-import numpy
 import tensorflow as tf
 import argparse
-import numpy as np
 import os
 import tensorpack as tp
 
@@ -33,26 +31,26 @@ class Model(tp.ModelDesc):
             tf.image_summary("train_image", image, 10)
 
         image = image / 4.0     # just to make range smaller
-        with tp.argscope.scope(tp.Conv2D, nl=tp.BNReLU(is_training), use_bias=False, kernel_shape=3):
-            l = tp.Conv2D('conv1.1', image, out_channel=64)
-            l = tp.Conv2D('conv1.2', l, out_channel=64)
+        with tp.argscope.scope(tp.Conv2D, nl=tp.BNReLU(is_training), bias_term=False, kernel_size=3):
+            l = tp.Conv2D('conv1.1', image, num_output=64)
+            l = tp.Conv2D('conv1.2', l, num_output=64)
             l = tp.MaxPooling('pool1', l, 3, stride=2, padding='SAME')
 
-            l = tp.Conv2D('conv2.1', l, out_channel=128)
-            l = tp.Conv2D('conv2.2', l, out_channel=128)
+            l = tp.Conv2D('conv2.1', l, num_output=128)
+            l = tp.Conv2D('conv2.2', l, num_output=128)
             l = tp.MaxPooling('pool2', l, 3, stride=2, padding='SAME')
 
-            l = tp.Conv2D('conv3.1', l, out_channel=128, padding='VALID')
-            l = tp.Conv2D('conv3.2', l, out_channel=128, padding='VALID')
-        l = tp.FullyConnected('fc0', l, 1024 + 512, b_init_config=tp.FillerConfig(type='constant', value=0.1))
+            l = tp.Conv2D('conv3.1', l, num_output=128, pad='VALID')
+            l = tp.Conv2D('conv3.2', l, num_output=128, pad='VALID')
+        l = tp.FullyConnected('fc0', l, 1024 + 512, bias_filler=tp.caffe_pb2.FillerParameter(type='constant', value=0.1))
         l = tp.dropout('fc0_dropout', l, keep_prob)
-        l = tp.FullyConnected('fc1', l, 512, b_init_config=tp.FillerConfig(type='constant', value=0.1))
-        logits = tp.FullyConnected('linear', l, out_dim=self.cifar_classnum, nl=tf.identity)
+        l = tp.FullyConnected('fc1', l, 512, bias_filler=tp.caffe_pb2.FillerParameter(type='constant', value=0.1))
+        logits = tp.FullyConnected('linear', l, num_output=self.cifar_classnum, nl=tf.identity)
 
         classfication_loss = tp.classification_loss('classfication_loss', logits, labels,
                                                     keys=tp.MOVING_SUMMARY_VARS_KEY)
         nr_wrong = tp.classification_accuracy('nr_wrong', logits, labels, keys=tp.MOVING_SUMMARY_VARS_KEY)
-        wd_loss = tp.regularize_loss('wd_loss', 'fc.*/W', 0.004, keys=tp.MOVING_SUMMARY_VARS_KEY)
+        wd_loss = tp.regularize_loss('wd_loss', 'fc.*/weight', 0.004, keys=tp.MOVING_SUMMARY_VARS_KEY)
 
         tp.add_param_summary([('.*/W', ['histogram'])])   # monitor W
         self.loss = tp.sum_loss('sum_loss', [classfication_loss, wd_loss])
