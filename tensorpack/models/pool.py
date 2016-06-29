@@ -150,44 +150,5 @@ def BilinearUpSample(x, shape):
     output = tf.nn.conv2d(x, weight_var, [1,1,1,1], padding='SAME')
     return output
 
-from ._test import TestModel
-class TestPool(TestModel):
-    def test_fixed_unpooling(self):
-        h, w = 3, 4
-        mat = np.random.rand(h, w, 3).astype('float32')
-        inp = self.make_variable(mat)
-        inp = tf.reshape(inp, [1, h, w, 3])
-        output = FixedUnPooling('unpool', inp, 2)
-        res = self.run_variable(output)
-        self.assertEqual(res.shape, (1, 2*h, 2*w, 3))
 
-        # mat is on cornser
-        ele = res[0,::2,::2,0]
-        self.assertTrue((ele == mat[:,:,0]).all())
-        # the rest are zeros
-        res[0,::2,::2,:] = 0
-        self.assertTrue((res == 0).all())
 
-    def test_upsample(self):
-        h, w = 5, 5
-        scale = 2
-
-        mat = np.random.rand(h, w).astype('float32')
-        inp = self.make_variable(mat)
-        inp = tf.reshape(inp, [1, h, w, 1])
-
-        output = BilinearUpSample('upsample', inp, scale)
-        res = self.run_variable(output)
-
-        from skimage.transform import rescale
-        res2 = rescale(mat, scale)
-
-        diff = np.abs(res2 - res[0,:,:,0])
-
-        # not equivalent to rescale on edge
-        diff[0,:] = 0
-        diff[:,0] = 0
-        if not diff.max() < 1e-4:
-            import IPython;
-            IPython.embed(config=IPython.terminal.ipapp.load_default_config())
-        self.assertTrue(diff.max() < 1e-4)
