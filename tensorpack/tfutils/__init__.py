@@ -12,3 +12,5 @@ from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.tfutils.filler import *
 from tensorpack.tfutils.transformation import *
 
+from tensorpack.tfutils import object_detection
+

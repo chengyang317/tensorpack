@@ -40,8 +40,8 @@ def segm_loss(segm_eval, segm_gt, keys=None):
     :param segm_gt: groud truth image. (b,h,w)
     :return:
     """
-    segm_eval_shape = get_shape(segm_eval)
-    segm_gt_shape = get_shape(segm_gt)
+    segm_eval_shape = tensor_shape(segm_eval)
+    segm_gt_shape = tensor_shape(segm_gt)
     assert len(segm_eval_shape) == 4 and len(segm_gt_shape) == 3
     # reshape the segm_eval to (b*h*w,c), segm_gt to (b*h*w,)
     logits = tf.reshape(segm_eval, [-1, segm_eval_shape[-1]])

@@ -8,7 +8,7 @@ import tensorflow as tf
 from ..utils import logger
 
 __all__ = ['prediction_incorrect', 'one_hot', 'flatten', 'batch_flatten', 'logSoftmax', 'channel_flatten', 'cast_type',
-           'class_balanced_binary_class_cross_entropy', 'print_stat', 'rms', 'get_shape', 'get_size', 'BOOLEN_TYPES',
+           'class_balanced_binary_class_cross_entropy', 'print_stat', 'rms', 'tensor_shape', 'get_size', 'BOOLEN_TYPES',
            'NUMERIC_TYPES', 'mean_vector', 'reshape_like', 'cast_like', 'prediction_correct', 'cast_list']
 
 BOOLEN_TYPES = [tf.bool]
@@ -54,7 +54,7 @@ def batch_flatten(x):
     """
     Flatten the tensor except the first dimension.
     """
-    shape = get_shape(x)
+    shape = tensor_shape(x)
     if not isinstance(shape[0], tf.Tensor):
         return tf.reshape(x, [shape[0], -1])
     if tf.Tensor not in [type(item) for item in shape[1:]]:
@@ -68,7 +68,7 @@ def channel_flatten(x):
     :param x:
     :return:
     """
-    shape = get_shape(x)
+    shape = tensor_shape(x)
     if not isinstance(shape[-1], tf.Tensor):
         return tf.reshape(x, [-1, shape[-1]])
     if tf.Tensor not in [type(item) for item in shape[:-1]]:
@@ -126,7 +126,7 @@ def rms(x, name=None):
     return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
 
 
-def get_shape(x):
+def tensor_shape(x):
     """
     get a shape of tensor
     :param x:
@@ -164,10 +164,7 @@ def cast_type(x, types):
     if type(types) not in (tuple, list):
         types = [types]
     if x.dtype not in types:
-        if type(x) is np.ndarray:
-            return x.astype(types[0])
-        else:
-            return tf.cast(x, dtype=types[0])
+        return tf.cast(x, dtype=types[0])
     return x
 
 
@@ -187,7 +184,7 @@ def mean_vector(x):
 
 
 def reshape_like(x, y):
-    y_shape = get_shape(y)
+    y_shape = tensor_shape(y)
     return tf.reshape(x, y_shape)
 
 
