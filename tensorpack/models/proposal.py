@@ -3,6 +3,7 @@
 # File: proposal
 # Author: Philip Cheng
 # Time: 6/29/16 -> 4:31 PM
+import tensorflow as tf
 from tensorpack.tools.anchors import generate_anchors, anchors_shift
 from tensorpack.tfutils.symbolic_functions import tensor_shape
 from tensorpack.tfutils.object_detection.bbox_transform import *
@@ -32,8 +33,12 @@ def Proposal(inputs, feat_strid, im_info, base_size=16, anchor_scales=(8, 16, 32
     shift_anchors = anchors_shift(anchors, width, height, feat_strid)
     # According anchors and bbox_prob to create proposals
     proposals = proposal_from_delta(boxes=anchors, bbox_deltas=bbox_prob)
+    proposals = tf.reshape(proposals, (-1, 4))
     proposals = clip_boxes(proposals, im_info[:2])
     keep = filter_boxes(proposals, min_size * im_info[2])
+    proposals = tf.boolean_mask(proposals, keep)
+
+
 
 
 

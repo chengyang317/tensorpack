@@ -10,6 +10,7 @@ from tensorpack import callbacks
 from tensorpack import dataflow
 from tensorpack import tools
 from tensorpack import framwork
+from tensorpack import proto
 
 from tensorpack.train import *
 from tensorpack.models import *
@@ -19,4 +20,6 @@ from tensorpack.callbacks import *
 from tensorpack.dataflow import *
 from tensorpack.tools import *
 from tensorpack.framwork import *
+from tensorpack.proto import *
+
 
