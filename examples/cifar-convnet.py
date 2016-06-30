@@ -13,6 +13,7 @@ A small convnet model for cifar 10 or cifar100 dataset.
 For Cifar10: 90% validation accuracy after 40k step.
 """
 
+
 class Model(tp.ModelDesc):
     def __init__(self, cifar_classnum):
         super(Model, self).__init__()
